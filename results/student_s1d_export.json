@@ -1,0 +1,23 @@
+{
+ "tag": "s1d",
+ "note": "x86 server CPU timings, NOT phone numbers",
+ "torch": "2.11.0+cu128",
+ "avatar": {
+  "wrapper_vs_diffusers_maxabs": 0.0,
+  "export": "ok",
+  "export_s": 26.0,
+  "onnx_MB_fp32": 1264.1,
+  "ort_vs_torch_maxabs": 1.055002212524414e-05,
+  "ort_vs_torch_meanabs": 2.541045489579119e-07,
+  "ort_cpu_8threads_s_median": 1.056
+ },
+ "sticker": {
+  "wrapper_vs_diffusers_maxabs": 0.0,
+  "export": "ok",
+  "export_s": 23.1,
+  "onnx_MB_fp32": 1264.1,
+  "ort_vs_torch_maxabs": 2.872943878173828e-05,
+  "ort_vs_torch_meanabs": 2.0150325497070298e-07,
+  "ort_cpu_8threads_s_median": 1.054
+ }
+}

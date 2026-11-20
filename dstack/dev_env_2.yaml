@@ -1,0 +1,17 @@
+type: dev-environment
+name: dev-duyhv-2
+
+# i2i-sticker-avatar: extra student-training node (user request 2026-11-19 ~04:20 UTC: take the last 2 free H200 NVL on
+# h200-gpu-fleet; dev-duyhv itself sits on h200-120-fleet). Same image + /mnt/project/kchat volume as dev-duyhv.
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+ide: vscode
+
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+
+fleets:
+  - h200-gpu-fleet
+
+resources:
+  gpu: H200NVL:2
+  shm_size: 64GB

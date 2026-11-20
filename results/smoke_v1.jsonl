@@ -1,0 +1,6 @@
+{"model": "sdturbo", "steps": 2, "load_s": 36.6, "lat_med_s": 0.1924, "lat_first_s": 4.203, "peak_vram_gb": 3.27, "ts": "2026-11-14T14:25:45"}
+{"model": "sdxs", "steps": 2, "load_s": 33.6, "lat_med_s": 0.1535, "lat_first_s": 3.383, "peak_vram_gb": 1.49, "ts": "2026-11-14T14:26:30"}
+{"model": "ip2p", "steps": 10, "load_s": 22.0, "lat_med_s": 0.4225, "lat_first_s": 5.48, "peak_vram_gb": 2.83, "ts": "2026-11-14T14:28:06"}
+{"model": "sana_sprint", "steps": 2, "load_s": 85.2, "lat_med_s": 0.3332, "lat_first_s": 3.081, "peak_vram_gb": 3.75, "ts": "2026-11-14T14:29:45"}
+{"model": "klein", "steps": 4, "load_s": 10.3, "lat_med_s": 0.6903, "lat_first_s": 2.926, "peak_vram_gb": 16.71, "ts": "2026-11-14T14:30:21"}
+{"model": "sd15_ipa_lcm", "steps": 4, "load_s": 11.8, "lat_med_s": 0.3462, "lat_first_s": 7.645, "peak_vram_gb": 4.35, "ts": "2026-11-14T14:31:08"}

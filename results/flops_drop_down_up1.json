@@ -1,0 +1,18 @@
+{
+ "groups": "down,up1",
+ "modules": 20,
+ "hhB0": {
+  "image": 595.2,
+  "trunk": 295.9,
+  "head": 299.3,
+  "set22": 6881.5
+ },
+ "dropped": {
+  "image": 532.4,
+  "trunk": 246.2,
+  "head": 286.2,
+  "set22": 6541.9
+ },
+ "saving_image_pct": 10.6,
+ "saving_set_pct": 4.9
+}

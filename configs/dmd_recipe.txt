@@ -1,0 +1,1 @@
+--dmd-w 4 --reg-w 0.25 --cfg 4.5 --color-w 2 --eye-w 4 --eye-chroma

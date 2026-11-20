@@ -1,0 +1,39 @@
+{
+ "eval_set": "selfie",
+ "input_L_median_per_quartile": [
+  57.3,
+  63.5,
+  71.0,
+  78.6
+ ],
+ "klein_personal": {
+  "n": 200,
+  "dL_median_Q1_to_Q4": [
+   5.7,
+   6.5,
+   12.2,
+   5.7
+  ],
+  "slope_out_vs_in": 1.06
+ },
+ "student_c3_dmd3": {
+  "n": 200,
+  "dL_median_Q1_to_Q4": [
+   4.3,
+   4.3,
+   11.4,
+   6.3
+  ],
+  "slope_out_vs_in": 1.09
+ },
+ "student_dl1_dmd": {
+  "n": 200,
+  "dL_median_Q1_to_Q4": [
+   2.7,
+   3.5,
+   11.0,
+   5.5
+  ],
+  "slope_out_vs_in": 1.11
+ }
+}

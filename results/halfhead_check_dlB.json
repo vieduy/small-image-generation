@@ -1,0 +1,235 @@
+{
+ "flops": {
+  "unet_gflops": 686.7,
+  "trunk_gflops": 295.9,
+  "head_gflops_full_width": 390.8,
+  "speedup22_trunk_only": 1.699
+ },
+ "margins": {
+  "0": {
+   "head_gflops": 299.3,
+   "speedup22": 2.195,
+   "local": {
+    "latent_maxabs": 2.87523,
+    "psnr_mean": 26.2,
+    "psnr_min": 23.5,
+    "lpips_mean": 0.10212,
+    "lpips_max": 0.15682,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 2.08242,
+    "psnr_mean": 50.87,
+    "psnr_min": 42.05,
+    "lpips_mean": 0.00064,
+    "lpips_max": 0.00144,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   }
+  },
+  "1": {
+   "head_gflops": 302.2,
+   "speedup22": 2.175,
+   "local": {
+    "latent_maxabs": 2.86651,
+    "psnr_mean": 26.64,
+    "psnr_min": 23.88,
+    "lpips_mean": 0.08821,
+    "lpips_max": 0.1411,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 1.08591,
+    "psnr_mean": 63.36,
+    "psnr_min": 50.22,
+    "lpips_mean": 3e-05,
+    "lpips_max": 0.00032,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   }
+  },
+  "2": {
+   "head_gflops": 305.1,
+   "speedup22": 2.156,
+   "local": {
+    "latent_maxabs": 2.78952,
+    "psnr_mean": 27.03,
+    "psnr_min": 24.2,
+    "lpips_mean": 0.07916,
+    "lpips_max": 0.12856,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.28285,
+    "psnr_mean": 72.77,
+    "psnr_min": 61.29,
+    "lpips_mean": 0.0,
+    "lpips_max": 3e-05,
+    "worst": [
+     "face_028",
+     "expr_party"
+    ]
+   }
+  },
+  "4": {
+   "head_gflops": 310.8,
+   "speedup22": 2.118,
+   "local": {
+    "latent_maxabs": 2.68578,
+    "psnr_mean": 27.88,
+    "psnr_min": 24.89,
+    "lpips_mean": 0.06268,
+    "lpips_max": 0.10616,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.03312,
+    "psnr_mean": 82.96,
+    "psnr_min": 78.84,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "6": {
+   "head_gflops": 316.5,
+   "speedup22": 2.081,
+   "local": {
+    "latent_maxabs": 2.63615,
+    "psnr_mean": 28.76,
+    "psnr_min": 25.56,
+    "lpips_mean": 0.04951,
+    "lpips_max": 0.08597,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.00163,
+    "psnr_mean": 88.41,
+    "psnr_min": 79.68,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "8": {
+   "head_gflops": 322.2,
+   "speedup22": 2.046,
+   "local": {
+    "latent_maxabs": 2.57439,
+    "psnr_mean": 29.65,
+    "psnr_min": 26.24,
+    "lpips_mean": 0.03921,
+    "lpips_max": 0.06893,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.00178,
+    "psnr_mean": 89.49,
+    "psnr_min": 82.54,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "12": {
+   "head_gflops": 333.6,
+   "speedup22": 1.978,
+   "local": {
+    "latent_maxabs": 2.47978,
+    "psnr_mean": 31.52,
+    "psnr_min": 27.65,
+    "lpips_mean": 0.02445,
+    "lpips_max": 0.04345,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.00134,
+    "psnr_mean": 145.27,
+    "psnr_min": 79.97,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "16": {
+   "head_gflops": 345.1,
+   "speedup22": 1.915,
+   "local": {
+    "latent_maxabs": 2.40251,
+    "psnr_mean": 33.67,
+    "psnr_min": 29.41,
+    "lpips_mean": 0.01461,
+    "lpips_max": 0.02622,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.00134,
+    "psnr_mean": 145.27,
+    "psnr_min": 79.97,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  }
+ },
+ "meta": {
+  "tag": "dlB",
+  "decoder": "decg2",
+  "faces": [
+   "face_000",
+   "face_014",
+   "face_028",
+   "face_042",
+   "face_056",
+   "face_070",
+   "face_084",
+   "face_099"
+  ],
+  "n_images_per_margin": 176,
+  "dtype": "fp32",
+  "minutes": 1.9
+ }
+}

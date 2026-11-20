@@ -1,0 +1,16 @@
+{
+ "klein_personal": {
+  "eval_set": "real",
+  "n": 300,
+  "dL_median": 14.7,
+  "absdL_median": 14.7,
+  "dL_dark25_median": 10.2
+ },
+ "student_an_b1_dmd": {
+  "eval_set": "real",
+  "n": 300,
+  "dL_median": 12.2,
+  "absdL_median": 12.2,
+  "dL_dark25_median": 9.0
+ }
+}

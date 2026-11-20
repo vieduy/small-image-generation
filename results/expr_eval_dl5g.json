@@ -1,0 +1,108 @@
+{
+ "happy": {
+  "id_top5": 0.417,
+  "clip_expr_acc": 0.667,
+  "sticker_pass": 1.0
+ },
+ "lol": {
+  "id_top5": 0.333,
+  "clip_expr_acc": 0.792,
+  "sticker_pass": 1.0
+ },
+ "love": {
+  "id_top5": 0.458,
+  "clip_expr_acc": 0.417,
+  "sticker_pass": 1.0
+ },
+ "cry": {
+  "id_top5": 0.417,
+  "clip_expr_acc": 1.0,
+  "sticker_pass": 1.0
+ },
+ "angry": {
+  "id_top5": 0.292,
+  "clip_expr_acc": 0.458,
+  "sticker_pass": 1.0
+ },
+ "wow": {
+  "id_top5": 0.375,
+  "clip_expr_acc": 1.0,
+  "sticker_pass": 1.0
+ },
+ "think": {
+  "id_top5": 0.292,
+  "clip_expr_acc": 0.917,
+  "sticker_pass": 1.0
+ },
+ "sleepy": {
+  "id_top5": 0.583,
+  "clip_expr_acc": 0.083,
+  "sticker_pass": 1.0
+ },
+ "thumbs": {
+  "id_top5": 0.208,
+  "clip_expr_acc": 0.542,
+  "sticker_pass": 1.0
+ },
+ "wave": {
+  "id_top5": 0.208,
+  "clip_expr_acc": 0.667,
+  "sticker_pass": 1.0
+ },
+ "ok": {
+  "id_top5": 0.292,
+  "clip_expr_acc": 0.458,
+  "sticker_pass": 1.0
+ },
+ "facepalm": {
+  "id_top5": 0.333,
+  "clip_expr_acc": 0.583,
+  "sticker_pass": 1.0
+ },
+ "shrug": {
+  "id_top5": 0.292,
+  "clip_expr_acc": 0.833,
+  "sticker_pass": 1.0
+ },
+ "party": {
+  "id_top5": 0.208,
+  "clip_expr_acc": 0.667,
+  "sticker_pass": 1.0
+ },
+ "cool": {
+  "id_top5": 0.292,
+  "clip_expr_acc": 1.0,
+  "sticker_pass": 1.0
+ },
+ "shy": {
+  "id_top5": 0.208,
+  "clip_expr_acc": 0.875,
+  "sticker_pass": 1.0
+ },
+ "wink": {
+  "id_top5": 0.417,
+  "clip_expr_acc": 0.042,
+  "sticker_pass": 1.0
+ },
+ "sad": {
+  "id_top5": 0.458,
+  "clip_expr_acc": 0.25,
+  "sticker_pass": 1.0
+ },
+ "thanks": {
+  "id_top5": 0.167,
+  "clip_expr_acc": 0.125,
+  "sticker_pass": 1.0
+ },
+ "night": {
+  "id_top5": 0.5,
+  "clip_expr_acc": 0.0,
+  "sticker_pass": 1.0
+ },
+ "_mean": {
+  "id_top5": 0.338,
+  "clip_expr_acc": 0.569,
+  "sticker_pass": 1.0
+ },
+ "_n_faces": 24
+}

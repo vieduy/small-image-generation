@@ -1,0 +1,26 @@
+#!/bin/bash
+# Detail experiment step 2 (user-approved 2026-11-17): the step-1 settings (regression anchor 0.1, fake critic 5 updates/step)
+# + DMD2-style GAN (--gan-w 5e-3; head on klein-base fake-score single-block-9 features, real = klein targets at 512 px).
+# 1000 generator steps from dl1; dl1_det2 vs dl1_det1 isolates the GAN. Queued on GPU2 after step 1.
+until grep -qaE "DET1_DONE|DET1_FAIL" logs/h200_detail_s1.log; do sleep 30; done
+set -x
+cd /mnt/project/kchat/duyhv/i2i-sticker-avatar
+source env.sh
+export CUDA_VISIBLE_DEVICES=0
+P=$VENV/bin/python
+R=$(cat configs/dmd_recipe.txt); X="--reg-w 0.1 --fake-updates 5 --gan-w 5e-3"; echo "RECIPE $R $X (later flags win)"
+$P scripts/train_dmd.py --style cartoon3d --manifest manifest_round4.jsonl --expr --max-pairs 5000 --expr-frac 0.6 \
+   --init-from dl1 --tag dl1_det2 --steps 1000 --fake-warmup 200 --lr 1e-4 --ckpt-every 250 $R $X || { echo "DET2_FAIL"; exit 1; }
+for T in dl1_det2; do
+  $P scripts/expr_eval.py --tag $T || echo "EXPR_FAIL $T"
+  for ES in v2 real; do
+    EVAL_SET=$ES $P scripts/student_infer.py --tag $T --style cartoon3d --no-perf && \
+      EVAL_SET=$ES $P scripts/eval_quality.py --tag student_$T --styles cartoon3d || echo "EVAL_FAIL $T $ES"
+  done
+done
+for ES in v2 real; do
+  EVAL_SET=$ES STYLE=cartoon3d TAGS="klein_personal student_dl1_dmd student_dl1_dmd_s1000 student_dl1_det1 student_dl1_det2" OUT=_det2_$ES $P scripts/skin_compare.py || echo "SKIN_FAIL $ES"
+done
+$P scripts/detail_bands.py student_c3_dmd3 student_dl1_dmd student_dl1_dmd_s1000 student_dl1_det1 student_dl1_det2 || echo "BANDS_FAIL"
+chmod -R a+rwX outputs results grids weights logs 2>/dev/null
+echo "DET2_DONE $(date -Is)"

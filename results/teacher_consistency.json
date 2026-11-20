@@ -1,0 +1,38 @@
+{
+ "current/train": {
+  "photos": 200,
+  "seed_lpips": 0.2093,
+  "frame_centre_jit": 0.0108,
+  "frame_logsize_jit": 0.0258,
+  "shirt_seed_std_dE": 8.14,
+  "shirt_vs_photo_dE": 22.53,
+  "id_cos": 0.243
+ },
+ "keep/train": {
+  "photos": 200,
+  "seed_lpips": 0.1483,
+  "frame_centre_jit": 0.0073,
+  "frame_logsize_jit": 0.02,
+  "shirt_seed_std_dE": 7.4,
+  "shirt_vs_photo_dE": 20.59,
+  "id_cos": 0.291
+ },
+ "v4/train": {
+  "photos": 200,
+  "seed_lpips": 0.1496,
+  "frame_centre_jit": 0.0073,
+  "frame_logsize_jit": 0.0202,
+  "shirt_seed_std_dE": 4.23,
+  "shirt_vs_photo_dE": 15.42,
+  "id_cos": 0.3033
+ },
+ "v4/ffhq": {
+  "photos": 74,
+  "seed_lpips": 0.1968,
+  "frame_centre_jit": 0.0095,
+  "frame_logsize_jit": 0.0232,
+  "shirt_seed_std_dE": 7.11,
+  "shirt_vs_photo_dE": 36.02,
+  "id_cos": 0.177
+ }
+}

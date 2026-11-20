@@ -1,0 +1,30 @@
+{
+ "klein_personal": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 6.3,
+  "absdL_median": 7.1,
+  "dL_dark25_median": 3.1
+ },
+ "student_s3d": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 8.2,
+  "absdL_median": 8.2,
+  "dL_dark25_median": 4.7
+ },
+ "student_s5d": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 5.9,
+  "absdL_median": 5.9,
+  "dL_dark25_median": 4.3
+ },
+ "student_s6d": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 6.7,
+  "absdL_median": 6.7,
+  "dL_dark25_median": 4.3
+ }
+}

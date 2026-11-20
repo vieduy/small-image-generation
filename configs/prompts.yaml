@@ -1,0 +1,17 @@
+# Task prompt templates per model family. {desc} = style description, {short} = short style name (styles/<name>/style.yaml).
+# Swappable config; the server picks the block named by PROMPTS_FAMILY (default: the MODEL name, else "default").
+default:
+  avatar: "Avatar portrait of the person, {desc}. Same face, hairstyle, skin tone, age, accessories and expression. Head and shoulders, centered, plain background."
+  sticker: "Die-cut chat sticker of the subject, {desc}. Same identity and key features, full subject, thick white outline, isolated on a plain flat white background."
+klein:   # multi-reference: image 1 = user photo, image 2 = style reference
+  avatar: "Image 1 is a photo of a person. Image 2 is only a style reference. Redraw the person from image 1 as an avatar portrait in the art style of image 2 ({desc}). Keep the face shape, skin tone, age, hairstyle, head covering, facial hair, glasses and expression of the person in image 1. Do not copy the character from image 2. Head and shoulders, centered, plain background."
+  sticker: "Image 1 is a photo of the subject. Image 2 is only a style reference. Redraw the subject from image 1 as a die-cut chat sticker in the art style of image 2 ({desc}). Keep the identity and key features of the subject in image 1 (species or object type, colors, skin tone, hair, accessories). Do not copy the character from image 2. Full subject, thick white outline, isolated on a plain flat white background."
+ip2p:    # InstructPix2Pix wants short edit instructions
+  avatar: "turn it into a {short} avatar"
+  sticker: "turn it into a {short} sticker with a white border on a white background"
+klein_text:   # klein with the user photo as the ONLY image; style comes from text (or a LoRA later), no style ref image
+  avatar: "Redraw the person in this photo as an avatar portrait, {desc}. Keep the same face shape, skin tone, age, gender, hairstyle, head covering, facial hair and expression; do not add glasses or accessories that are not in the photo. Head and shoulders, centered, plain background."
+  sticker: "Redraw the subject in this photo as a die-cut chat sticker, {desc}. Keep the identity and key features (species or object type, colors, skin tone, hair, accessories). Full subject, thick white outline, isolated on a plain flat white background."
+klein_text_v2:   # v2: explicit skin-color / age / baldness preservation (fix for lightening + de-aging seen in klein_text)
+  avatar: "Redraw the person in this photo as an avatar portrait, {desc}. The avatar must keep this person's real skin color exactly (do not lighten or darken the skin), their age (keep wrinkles, grey or white hair and facial hair), gender, face shape, hairstyle or baldness, head covering and expression. Add glasses or accessories only if they are in the photo. Head and shoulders, centered, plain background."
+  sticker: "Redraw the subject in this photo as a die-cut chat sticker, {desc}. Keep the identity and key features: for a person keep their real skin color exactly (do not lighten it), age, hairstyle or baldness, head covering, facial hair and accessories that are in the photo; for an animal or object keep its species or type, colors and markings. Full subject, thick white outline, isolated on a plain flat white background."

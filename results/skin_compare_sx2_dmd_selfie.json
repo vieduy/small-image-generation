@@ -1,0 +1,78 @@
+{
+ "klein_personal": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 7.1,
+  "absdL_median": 7.1,
+  "dL_dark25_median": 5.7,
+  "dChroma_Q1_to_Q4": [
+   17.9,
+   16.6,
+   5.7,
+   3.8
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   17.0,
+   17.0,
+   7.0,
+   5.0
+  ]
+ },
+ "student_c3_dmd3": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 6.3,
+  "absdL_median": 6.5,
+  "dL_dark25_median": 4.3,
+  "dChroma_Q1_to_Q4": [
+   19.0,
+   19.3,
+   8.3,
+   5.6
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   18.5,
+   19.0,
+   8.0,
+   6.0
+  ]
+ },
+ "student_dl2_dmd": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 8.2,
+  "absdL_median": 8.4,
+  "dL_dark25_median": 3.9,
+  "dChroma_Q1_to_Q4": [
+   15.1,
+   12.4,
+   5.4,
+   4.7
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   14.0,
+   12.5,
+   6.0,
+   5.0
+  ]
+ },
+ "student_sx2_dmd": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 9.6,
+  "absdL_median": 9.8,
+  "dL_dark25_median": 7.5,
+  "dChroma_Q1_to_Q4": [
+   15.0,
+   10.0,
+   5.3,
+   5.1
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   14.0,
+   11.0,
+   6.0,
+   6.0
+  ]
+ }
+}

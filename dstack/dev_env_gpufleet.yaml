@@ -1,0 +1,15 @@
+type: dev-environment
+name: dev-duyhv
+
+# i2i-sticker-avatar: teacher pair generation + student training pilot (H200 NVL, 2 GPUs, merged from dev-duyhv + dev-duyhv-2 on 2026-11-18)
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+ide: vscode
+
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+
+fleets: [h200-gpu-fleet]
+
+resources:
+  gpu: H200NVL:2
+  shm_size: 64GB

@@ -1,0 +1,39 @@
+{
+ "eval_set": "real",
+ "input_L_median_per_quartile": [
+  43.9,
+  56.9,
+  65.9,
+  75.7
+ ],
+ "klein_personal": {
+  "n": 300,
+  "dL_median_Q1_to_Q4": [
+   6.7,
+   6.7,
+   14.9,
+   11.0
+  ],
+  "slope_out_vs_in": 1.09
+ },
+ "student_c3_dmd3": {
+  "n": 300,
+  "dL_median_Q1_to_Q4": [
+   7.8,
+   9.4,
+   11.8,
+   9.8
+  ],
+  "slope_out_vs_in": 1.01
+ },
+ "student_dl1_dmd": {
+  "n": 300,
+  "dL_median_Q1_to_Q4": [
+   3.5,
+   4.7,
+   5.1,
+   8.6
+  ],
+  "slope_out_vs_in": 1.04
+ }
+}

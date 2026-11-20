@@ -1,0 +1,28 @@
+# Allow-list: only code, configs, docs and metric results are versioned.
+# Never commit: weights/, data/ (faces, pairs), outputs/, grids/ (face images), private_demo/ (owner's selfie),
+# release/ (Core ML packages), logs/, caches, venv/.
+/*
+!/.gitignore
+!/scripts/
+!/configs/
+!/styles/
+!/dstack/
+!/results/
+!/README.md
+!/PLAN.md
+!/report.md
+!/LICENSES.md
+!/requirements.lock
+!/env.sh
+!/candidates.csv
+!/results.csv
+!/results_student.csv
+# style reference images and binaries stay out
+styles/**/*.png
+styles/**/*.jpg
+**/__pycache__/
+*.pt
+*.npy
+*.safetensors
+*.mlpackage
+*.u8

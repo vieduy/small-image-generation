@@ -1,0 +1,83 @@
+{
+ "tag": "s2d",
+ "gpu": "NVIDIA H200 NVL",
+ "dtype": "fp16",
+ "note": "server GPU numbers, NOT phone numbers",
+ "params_M": {
+  "unet": 328.2,
+  "taesd_enc": 1.22,
+  "taesd_dec": 1.22,
+  "sdvae_enc": 34.2,
+  "sdvae_dec": 49.5,
+  "text_encoder": 0
+ },
+ "size_MB": {
+  "unet_fp16": 625.9,
+  "unet_int8": 313.0
+ },
+ "GFLOPs_b1": {
+  "taesd_enc": 122.3,
+  "unet": 418.1,
+  "taesd_dec": 141.4
+ },
+ "latency_ms_median_p95": {
+  "b1": {
+   "taesd_enc": [
+    1.942,
+    1.949
+   ],
+   "unet": [
+    5.573,
+    5.615
+   ],
+   "taesd_dec": [
+    2.078,
+    2.096
+   ],
+   "full_phone_path": [
+    9.058,
+    9.084
+   ],
+   "gpu_ms_per_img": 9.058
+  },
+  "b4": {
+   "taesd_enc": [
+    5.836,
+    5.853
+   ],
+   "unet": [
+    9.216,
+    9.256
+   ],
+   "taesd_dec": [
+    6.215,
+    6.234
+   ],
+   "full_phone_path": [
+    21.114,
+    21.185
+   ],
+   "gpu_ms_per_img": 5.279
+  },
+  "b16": {
+   "taesd_enc": [
+    20.874,
+    20.903
+   ],
+   "unet": [
+    26.077,
+    26.218
+   ],
+   "taesd_dec": [
+    22.315,
+    22.342
+   ],
+   "full_phone_path": [
+    69.024,
+    69.265
+   ],
+   "gpu_ms_per_img": 4.314
+  }
+ },
+ "peak_vram_GB": 9.52
+}

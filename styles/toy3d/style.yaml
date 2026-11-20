@@ -1,0 +1,18 @@
+name: toy3d
+description: 3D toy figure render, glossy vinyl material, soft studio lighting, rounded shapes, collectible designer toy look
+refs:
+- ref_000.png
+- ref_001.png
+- ref_002.png
+- ref_003.png
+- ref_004.png
+- ref_005.png
+- ref_006.png
+- ref_007.png
+default_ref: ref_000.png
+avatar_prompt: 'Turn the person in the photo into an avatar portrait in this style: {desc}. Keep the same face, hairstyle, skin tone, accessories and expression. Head and shoulders, centered, plain background.'
+sticker_prompt: 'Turn the subject in the photo into a die-cut chat sticker in this style: {desc}. Keep identity and key features, full subject, thick white outline around the subject, isolated on a plain flat white background.'
+lora: null
+license: self-generated with FLUX.2-klein-4B (Apache-2.0); prompts/seeds in manifest.jsonl
+short: 3D vinyl toy figure
+subject_description: 3D toy figure render, glossy vinyl material, soft studio lighting, rounded shapes, collectible designer toy look

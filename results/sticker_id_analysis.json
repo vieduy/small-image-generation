@@ -1,0 +1,50 @@
+{
+ "klein_personal/avatar": {
+  "n": 50,
+  "face_side_frac_median": 0.549,
+  "top5": 0.28,
+  "top5_face_crop": 0.28,
+  "top5_small_faces": 0.32,
+  "top5_big_faces": 0.24
+ },
+ "klein_personal/sticker": {
+  "n": 50,
+  "face_side_frac_median": 0.527,
+  "top5": 0.4,
+  "top5_face_crop": 0.36,
+  "top5_small_faces": 0.4,
+  "top5_big_faces": 0.4
+ },
+ "student_s3d/avatar": {
+  "n": 50,
+  "face_side_frac_median": 0.531,
+  "top5": 0.34,
+  "top5_face_crop": 0.32,
+  "top5_small_faces": 0.28,
+  "top5_big_faces": 0.4
+ },
+ "student_s3d/sticker": {
+  "n": 50,
+  "face_side_frac_median": 0.517,
+  "top5": 0.26,
+  "top5_face_crop": 0.28,
+  "top5_small_faces": 0.16,
+  "top5_big_faces": 0.36
+ },
+ "student_s5d/avatar": {
+  "n": 50,
+  "face_side_frac_median": 0.539,
+  "top5": 0.3,
+  "top5_face_crop": 0.32,
+  "top5_small_faces": 0.32,
+  "top5_big_faces": 0.28
+ },
+ "student_s5d/sticker": {
+  "n": 50,
+  "face_side_frac_median": 0.526,
+  "top5": 0.28,
+  "top5_face_crop": 0.3,
+  "top5_small_faces": 0.2,
+  "top5_big_faces": 0.36
+ }
+}

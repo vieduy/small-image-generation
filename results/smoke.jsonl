@@ -1,0 +1,9 @@
+{"model": "klein", "steps": 4, "load_s": 9.9, "lat_med_s": 0.6844, "lat_first_s": 2.734, "peak_vram_gb": 16.71, "ts": "2026-11-14T14:32:32"}
+{"model": "sdturbo", "steps": 2, "load_s": 21.8, "lat_med_s": 0.186, "lat_first_s": 4.094, "peak_vram_gb": 3.27, "ts": "2026-11-14T14:33:06"}
+{"model": "sdxs", "steps": 2, "load_s": 17.3, "lat_med_s": 0.1874, "lat_first_s": 3.467, "peak_vram_gb": 2.2, "ts": "2026-11-14T14:33:38"}
+{"model": "ip2p", "steps": 10, "load_s": 5.6, "lat_med_s": 0.4187, "lat_first_s": 5.457, "peak_vram_gb": 2.83, "ts": "2026-11-14T14:34:02"}
+{"model": "sana_sprint", "steps": 2, "load_s": 18.9, "lat_med_s": 0.3041, "lat_first_s": 2.845, "peak_vram_gb": 3.75, "ts": "2026-11-14T14:34:34"}
+{"model": "sd15_ipa_lcm", "steps": 4, "load_s": 9.2, "lat_med_s": 0.6131, "lat_first_s": 7.8, "peak_vram_gb": 4.35, "ts": "2026-11-14T14:35:08"}
+{"model": "klein", "tag": "klein_text", "env": {"KLEIN_REF": "0", "PROMPTS_FAMILY": "klein_text"}, "steps": 4, "load_s": 10.4, "lat_med_s": 0.4688, "lat_first_s": 2.575, "peak_vram_gb": 16.71, "ts": "2026-11-14T14:36:18"}
+{"model": "sdturbo", "tag": "sdturbo_s4", "env": {"STEPS": "4", "STRENGTH": "0.75"}, "steps": 4, "load_s": 6.3, "lat_med_s": 0.2431, "lat_first_s": 4.056, "peak_vram_gb": 3.27, "ts": "2026-11-14T14:36:38"}
+{"model": "sana_sprint", "tag": "sprint_s06", "env": {"STRENGTH": "0.6"}, "steps": 2, "load_s": 19.1, "lat_med_s": 0.3432, "lat_first_s": 2.942, "peak_vram_gb": 3.75, "ts": "2026-11-14T14:37:11"}

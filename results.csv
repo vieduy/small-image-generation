@@ -1,0 +1,2 @@
+config,model,steps,peak_vram_gb,ccu1_ips,ccu1_p50_s,ccu1_p95_s,ccu8_ips,ccu8_p95_s,ccu8_mean_batch,closed_peak_ips,gpu_s_per_img,max_ccu_p95_1p5s,rps_p95_le_1.0s,rps_p95_le_1.5s,rps_p95_le_2.0s,rps_p95_le_1.0s_ccu_avg_peak,rps_p95_le_1.5s_ccu_avg_peak,rps_p95_le_2.0s_ccu_avg_peak,foreign_gpu_pct
+sdxs_timingonly_b8,sdxs,2,5.86,4.831,0.2058,0.2185,13.378,0.8337,2.11,13.378,0.0747,8,10.336,10.336,10.336,3.73/7,3.73/7,3.73/7,86.5

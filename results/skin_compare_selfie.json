@@ -1,0 +1,23 @@
+{
+ "klein_personal": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 7.1,
+  "absdL_median": 7.1,
+  "dL_dark25_median": 5.7
+ },
+ "student_s5d": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 7.5,
+  "absdL_median": 7.5,
+  "dL_dark25_median": 3.9
+ },
+ "student_s6d": {
+  "eval_set": "selfie",
+  "n": 200,
+  "dL_median": 7.5,
+  "absdL_median": 7.5,
+  "dL_dark25_median": 4.3
+ }
+}

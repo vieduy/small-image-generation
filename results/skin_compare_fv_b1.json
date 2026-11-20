@@ -1,0 +1,23 @@
+{
+ "klein_personal": {
+  "eval_set": "v2",
+  "n": 318,
+  "dL_median": 9.0,
+  "absdL_median": 9.4,
+  "dL_dark25_median": 0.0
+ },
+ "student_fv_lora": {
+  "eval_set": "v2",
+  "n": 341,
+  "dL_median": 4.3,
+  "absdL_median": 4.7,
+  "dL_dark25_median": -0.8
+ },
+ "student_fv_b1": {
+  "eval_set": "v2",
+  "n": 335,
+  "dL_median": 6.3,
+  "absdL_median": 6.3,
+  "dL_dark25_median": 1.2
+ }
+}

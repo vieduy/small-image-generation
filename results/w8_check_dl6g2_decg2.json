@@ -1,0 +1,69 @@
+{
+ "fp16": {
+  "psnr": 50.7516,
+  "mad": 0.2122,
+  "max": 50.5143,
+  "lpips": 0.0003,
+  "worst_psnr": 39.0
+ },
+ "w8": {
+  "psnr": 34.1358,
+  "mad": 1.7544,
+  "max": 189.6286,
+  "lpips": 0.0082,
+  "worst_psnr": 23.37
+ },
+ "w8_vs_fp16": {
+  "psnr": 34.1817,
+  "mad": 1.72,
+  "max": 189.2929,
+  "lpips": 0.0082,
+  "worst_psnr": 23.34
+ },
+ "lapvar_mean": {
+  "ref": 370.2,
+  "fp16": 370.3,
+  "w8": 364.9
+ },
+ "n_images": 280,
+ "faces": 40,
+ "tasks": [
+  "avatar",
+  "sticker",
+  "expr_happy",
+  "expr_thumbs",
+  "expr_wave",
+  "expr_love",
+  "expr_cool"
+ ],
+ "compute": "float16",
+ "w8_tensors": 514,
+ "task_emb_rel_err": 0.1845,
+ "w8_psnr_by_task": {
+  "avatar": 38.27,
+  "sticker": 36.41,
+  "expr_happy": 35.06,
+  "expr_thumbs": 30.86,
+  "expr_wave": 30.29,
+  "expr_love": 33.59,
+  "expr_cool": 34.47
+ },
+ "w8_lpips_by_task": {
+  "avatar": 0.005,
+  "sticker": 0.0052,
+  "expr_happy": 0.0059,
+  "expr_thumbs": 0.012,
+  "expr_wave": 0.0157,
+  "expr_love": 0.0073,
+  "expr_cool": 0.0066
+ },
+ "w8_psnr_p5_p50": [
+  28.86,
+  34.02
+ ],
+ "w8_worst": {
+  "psnr_vs_fp16": 23.34,
+  "face": "face_027",
+  "task": "expr_thumbs"
+ }
+}

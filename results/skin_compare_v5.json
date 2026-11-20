@@ -1,0 +1,26 @@
+{
+ "klein_personal": {
+  "n": 100,
+  "dL_median": 6.3,
+  "absdL_median": 6.9,
+  "dL_dark25_median": 3.1
+ },
+ "student_s3d": {
+  "n": 100,
+  "dL_median": 8.2,
+  "absdL_median": 8.2,
+  "dL_dark25_median": 4.7
+ },
+ "student_s4d": {
+  "n": 100,
+  "dL_median": 6.3,
+  "absdL_median": 6.5,
+  "dL_dark25_median": 4.3
+ },
+ "student_s5d": {
+  "n": 100,
+  "dL_median": 5.7,
+  "absdL_median": 5.9,
+  "dL_dark25_median": 4.3
+ }
+}

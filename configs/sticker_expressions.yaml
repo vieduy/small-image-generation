@@ -1,0 +1,22 @@
+# Sticker-set vocabulary (chat-app staples). Each entry: id, short label, teacher phrase (positive wording only:
+# negations inject attributes, see README prompt A/B). The student gets one learned token set per entry (no text encoder).
+- {id: happy,     label: "Happy",       phrase: "big happy smile, cheerful eyes"}
+- {id: lol,       label: "LOL",         phrase: "laughing out loud with eyes squeezed shut and tears of joy"}
+- {id: love,      label: "Love",        phrase: "heart-shaped eyes and small red hearts floating around the head"}
+- {id: cry,       label: "Crying",      phrase: "crying with big tears streaming down, trembling mouth"}
+- {id: angry,     label: "Angry",       phrase: "angry frown, red cheeks, a small puff of steam above the head"}
+- {id: wow,       label: "Wow",         phrase: "surprised face, wide open eyes and round open mouth"}
+- {id: think,     label: "Thinking",    phrase: "thinking pose, one hand on the chin, eyes looking up"}
+- {id: sleepy,    label: "Sleepy",      phrase: "sleepy face with closed eyes and a small 'Zzz' above the head"}
+- {id: thumbs,    label: "Thumbs up",   phrase: "smiling and giving a thumbs up with one hand"}
+- {id: wave,      label: "Hi",          phrase: "smiling and waving hello with one raised hand"}
+- {id: ok,        label: "OK",          phrase: "raising one hand next to the face making the OK gesture, thumb and index finger touching in a circle, other three fingers up, confident smile"}
+- {id: facepalm,  label: "Facepalm",    phrase: "facepalm, one hand covering the forehead, embarrassed"}
+- {id: shrug,     label: "Shrug",       phrase: "shrugging, both shoulders raised and both palms turned up, eyebrows raised, puzzled half smile"}
+- {id: party,     label: "Party",       phrase: "wearing a party hat, big excited smile, colorful confetti around the head"}
+- {id: cool,      label: "Cool",        phrase: "wearing dark sunglasses with a confident smirk"}
+- {id: shy,       label: "Shy",         phrase: "shy smile, blushing pink cheeks, eyes looking down"}
+- {id: wink,      label: "Wink",        phrase: "winking one eye with a playful smile and a small sparkle"}
+- {id: sad,       label: "Sad",         phrase: "sad face, downturned mouth, droopy eyebrows"}
+- {id: thanks,    label: "Thank you",   phrase: "both hands pressed together in front of the chest in a thank-you gesture, warm grateful smile"}
+- {id: night,     label: "Good night",  phrase: "eyes peacefully closed, resting the cheek on a small pillow, a tiny crescent moon beside the head"}

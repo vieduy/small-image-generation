@@ -1,0 +1,17 @@
+{
+ "old": {
+  "n": 40,
+  "human_face_rate": 0.55,
+  "clip_subject_ok": 0.925
+ },
+ "subjdesc_generic": {
+  "n": 40,
+  "human_face_rate": 0.1,
+  "clip_subject_ok": 1.0
+ },
+ "subjdesc_named": {
+  "n": 40,
+  "human_face_rate": 0.075,
+  "clip_subject_ok": 1.0
+ }
+}

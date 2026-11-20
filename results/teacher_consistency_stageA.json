@@ -1,0 +1,29 @@
+{
+ "keep/train": {
+  "photos": 8,
+  "seed_lpips": 0.1733,
+  "frame_centre_jit": 0.0057,
+  "frame_logsize_jit": 0.0141,
+  "shirt_seed_std_dE": 5.01,
+  "shirt_vs_photo_dE": 24.47,
+  "id_cos": 0.2925
+ },
+ "v3/train": {
+  "photos": 8,
+  "seed_lpips": 0.1865,
+  "frame_centre_jit": 0.0073,
+  "frame_logsize_jit": 0.012,
+  "shirt_seed_std_dE": 4.35,
+  "shirt_vs_photo_dE": 16.79,
+  "id_cos": 0.295
+ },
+ "v3/ffhq": {
+  "photos": 6,
+  "seed_lpips": 0.2001,
+  "frame_centre_jit": 0.0063,
+  "frame_logsize_jit": 0.0218,
+  "shirt_seed_std_dE": 4.72,
+  "shirt_vs_photo_dE": 31.44,
+  "id_cos": 0.1564
+ }
+}

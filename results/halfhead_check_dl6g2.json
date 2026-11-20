@@ -1,0 +1,235 @@
+{
+ "flops": {
+  "unet_gflops": 682.7,
+  "trunk_gflops": 0.0,
+  "head_gflops_full_width": 682.7,
+  "speedup22_trunk_only": 1.0
+ },
+ "margins": {
+  "0": {
+   "head_gflops": 591.3,
+   "speedup22": 1.155,
+   "local": {
+    "latent_maxabs": 2.32842,
+    "psnr_mean": 26.09,
+    "psnr_min": 23.05,
+    "lpips_mean": 0.10281,
+    "lpips_max": 0.16419,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 1.50185,
+    "psnr_mean": 50.62,
+    "psnr_min": 41.32,
+    "lpips_mean": 0.00069,
+    "lpips_max": 0.00262,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   }
+  },
+  "1": {
+   "head_gflops": 594.1,
+   "speedup22": 1.149,
+   "local": {
+    "latent_maxabs": 2.33611,
+    "psnr_mean": 26.52,
+    "psnr_min": 23.44,
+    "lpips_mean": 0.0884,
+    "lpips_max": 0.14444,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.8908,
+    "psnr_mean": 62.3,
+    "psnr_min": 46.48,
+    "lpips_mean": 3e-05,
+    "lpips_max": 0.00028,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   }
+  },
+  "2": {
+   "head_gflops": 597.0,
+   "speedup22": 1.144,
+   "local": {
+    "latent_maxabs": 2.33726,
+    "psnr_mean": 26.93,
+    "psnr_min": 23.76,
+    "lpips_mean": 0.0792,
+    "lpips_max": 0.12574,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.51579,
+    "psnr_mean": 71.41,
+    "psnr_min": 51.42,
+    "lpips_mean": 0.0,
+    "lpips_max": 5e-05,
+    "worst": [
+     "face_028",
+     "expr_shy"
+    ]
+   }
+  },
+  "4": {
+   "head_gflops": 602.7,
+   "speedup22": 1.133,
+   "local": {
+    "latent_maxabs": 2.47293,
+    "psnr_mean": 27.79,
+    "psnr_min": 24.44,
+    "lpips_mean": 0.06257,
+    "lpips_max": 0.10335,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.03031,
+    "psnr_mean": 82.87,
+    "psnr_min": 75.87,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_party"
+    ]
+   }
+  },
+  "6": {
+   "head_gflops": 608.4,
+   "speedup22": 1.122,
+   "local": {
+    "latent_maxabs": 2.65645,
+    "psnr_mean": 28.66,
+    "psnr_min": 25.09,
+    "lpips_mean": 0.04934,
+    "lpips_max": 0.08547,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.00145,
+    "psnr_mean": 88.31,
+    "psnr_min": 78.97,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "8": {
+   "head_gflops": 614.1,
+   "speedup22": 1.112,
+   "local": {
+    "latent_maxabs": 2.69981,
+    "psnr_mean": 29.54,
+    "psnr_min": 25.72,
+    "lpips_mean": 0.03906,
+    "lpips_max": 0.07484,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.00099,
+    "psnr_mean": 89.4,
+    "psnr_min": 82.1,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "12": {
+   "head_gflops": 625.6,
+   "speedup22": 1.091,
+   "local": {
+    "latent_maxabs": 2.35187,
+    "psnr_mean": 31.39,
+    "psnr_min": 27.06,
+    "lpips_mean": 0.02438,
+    "lpips_max": 0.05324,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.0012,
+    "psnr_mean": 145.26,
+    "psnr_min": 79.18,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  },
+  "16": {
+   "head_gflops": 637.0,
+   "speedup22": 1.072,
+   "local": {
+    "latent_maxabs": 1.90623,
+    "psnr_mean": 33.52,
+    "psnr_min": 28.72,
+    "lpips_mean": 0.01466,
+    "lpips_max": 0.03276,
+    "worst": [
+     "face_028",
+     "avatar"
+    ]
+   },
+   "gnfull": {
+    "latent_maxabs": 0.0012,
+    "psnr_mean": 145.26,
+    "psnr_min": 79.18,
+    "lpips_mean": 0.0,
+    "lpips_max": 0.0,
+    "worst": [
+     "face_028",
+     "expr_night"
+    ]
+   }
+  }
+ },
+ "meta": {
+  "tag": "dl6g2",
+  "decoder": "decg2",
+  "faces": [
+   "face_000",
+   "face_014",
+   "face_028",
+   "face_042",
+   "face_056",
+   "face_070",
+   "face_084",
+   "face_099"
+  ],
+  "n_images_per_margin": 176,
+  "dtype": "fp32",
+  "minutes": 1.2
+ }
+}

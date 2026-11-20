@@ -1,0 +1,56 @@
+{
+ "current/train": {
+  "photos": 8,
+  "seed_lpips": 0.2628,
+  "frame_centre_jit": 0.0062,
+  "frame_logsize_jit": 0.0209,
+  "shirt_seed_std_dE": 6.27,
+  "shirt_vs_photo_dE": 27.46,
+  "id_cos": 0.3538
+ },
+ "current/ffhq": {
+  "photos": 4,
+  "seed_lpips": 0.2405,
+  "frame_centre_jit": 0.0092,
+  "frame_logsize_jit": 0.0178,
+  "shirt_seed_std_dE": 7.78,
+  "shirt_vs_photo_dE": 31.66,
+  "id_cos": 0.0872
+ },
+ "v4/train": {
+  "photos": 8,
+  "seed_lpips": 0.2821,
+  "frame_centre_jit": 0.0092,
+  "frame_logsize_jit": 0.0203,
+  "shirt_seed_std_dE": 8.75,
+  "shirt_vs_photo_dE": 23.88,
+  "id_cos": 0.2628
+ },
+ "v4/ffhq": {
+  "photos": 4,
+  "seed_lpips": 0.2645,
+  "frame_centre_jit": 0.0078,
+  "frame_logsize_jit": 0.0229,
+  "shirt_seed_std_dE": 8.68,
+  "shirt_vs_photo_dE": 30.73,
+  "id_cos": 0.1295
+ },
+ "v5/train": {
+  "photos": 8,
+  "seed_lpips": 0.2745,
+  "frame_centre_jit": 0.0085,
+  "frame_logsize_jit": 0.0163,
+  "shirt_seed_std_dE": 5.59,
+  "shirt_vs_photo_dE": 21.13,
+  "id_cos": 0.317
+ },
+ "v5/ffhq": {
+  "photos": 4,
+  "seed_lpips": 0.2637,
+  "frame_centre_jit": 0.0027,
+  "frame_logsize_jit": 0.0202,
+  "shirt_seed_std_dE": 8.18,
+  "shirt_vs_photo_dE": 28.44,
+  "id_cos": 0.1352
+ }
+}

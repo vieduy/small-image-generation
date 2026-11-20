@@ -1,0 +1,42 @@
+{
+ "A_v1prompt_cartoon3d": {
+  "n": 32,
+  "dL_median": 35.1,
+  "dL_mean": 33.0,
+  "dL_dark24_median": 37.1,
+  "abs_dL_median": 35.1,
+  "id_top1": 0.031,
+  "id_top5": 0.156,
+  "face_det": 1.0
+ },
+ "B_v2prompt_cartoon3d": {
+  "n": 32,
+  "dL_median": 24.1,
+  "dL_mean": 21.0,
+  "dL_dark24_median": 25.3,
+  "abs_dL_median": 24.1,
+  "id_top1": 0.062,
+  "id_top5": 0.219,
+  "face_det": 1.0
+ },
+ "C_v2prompt_cartoon3d_b": {
+  "n": 32,
+  "dL_median": 23.5,
+  "dL_mean": 20.5,
+  "dL_dark24_median": 25.5,
+  "abs_dL_median": 23.5,
+  "id_top1": 0.062,
+  "id_top5": 0.188,
+  "face_det": 1.0
+ },
+ "D_personal_cartoon3d": {
+  "n": 32,
+  "dL_median": 3.1,
+  "dL_mean": 3.5,
+  "dL_dark24_median": 3.1,
+  "abs_dL_median": 4.5,
+  "id_top1": 0.125,
+  "id_top5": 0.344,
+  "face_det": 1.0
+ }
+}

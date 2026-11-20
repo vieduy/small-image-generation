@@ -1,0 +1,30 @@
+{
+ "klein_personal": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 6.3,
+  "absdL_median": 7.1,
+  "dL_dark25_median": 3.1
+ },
+ "student_pr_turbo_A": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 6.3,
+  "absdL_median": 6.3,
+  "dL_dark25_median": 4.3
+ },
+ "student_pr_turbo_B": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 4.3,
+  "absdL_median": 4.7,
+  "dL_dark25_median": 6.3
+ },
+ "student_pr_turbo_C": {
+  "eval_set": "v2",
+  "n": 400,
+  "dL_median": 5.1,
+  "absdL_median": 5.1,
+  "dL_dark25_median": 2.0
+ }
+}

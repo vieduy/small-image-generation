@@ -1,0 +1,78 @@
+{
+ "klein_personal": {
+  "eval_set": "real",
+  "n": 300,
+  "dL_median": 9.0,
+  "absdL_median": 9.0,
+  "dL_dark25_median": 6.7,
+  "dChroma_Q1_to_Q4": [
+   15.9,
+   14.4,
+   5.4,
+   -1.0
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   11.0,
+   15.0,
+   9.0,
+   1.0
+  ]
+ },
+ "student_c3_dmd3": {
+  "eval_set": "real",
+  "n": 300,
+  "dL_median": 9.4,
+  "absdL_median": 9.4,
+  "dL_dark25_median": 7.8,
+  "dChroma_Q1_to_Q4": [
+   17.8,
+   15.6,
+   9.0,
+   1.4
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   15.0,
+   17.0,
+   12.0,
+   3.0
+  ]
+ },
+ "student_dl2_dmd": {
+  "eval_set": "real",
+  "n": 300,
+  "dL_median": 16.5,
+  "absdL_median": 16.9,
+  "dL_dark25_median": 32.9,
+  "dChroma_Q1_to_Q4": [
+   6.5,
+   3.1,
+   3.4,
+   4.2
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   5.0,
+   5.0,
+   5.0,
+   4.0
+  ]
+ },
+ "student_sx2_dmd": {
+  "eval_set": "real",
+  "n": 300,
+  "dL_median": 15.3,
+  "absdL_median": 15.7,
+  "dL_dark25_median": 30.2,
+  "dChroma_Q1_to_Q4": [
+   6.8,
+   4.4,
+   3.7,
+   5.2
+  ],
+  "dYellow_b_Q1_to_Q4": [
+   7.0,
+   7.0,
+   8.0,
+   5.0
+  ]
+ }
+}

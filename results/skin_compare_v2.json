@@ -1,0 +1,32 @@
+{
+ "klein_text": {
+  "n": 100,
+  "dL_median": 19.7,
+  "absdL_median": 19.7,
+  "dL_dark25_median": 37.3
+ },
+ "klein_personal": {
+  "n": 100,
+  "dL_median": 6.3,
+  "absdL_median": 6.9,
+  "dL_dark25_median": 3.1
+ },
+ "student_s1d": {
+  "n": 100,
+  "dL_median": 9.1,
+  "absdL_median": 9.1,
+  "dL_dark25_median": 6.7
+ },
+ "student_s2d": {
+  "n": 100,
+  "dL_median": 7.6,
+  "absdL_median": 7.6,
+  "dL_dark25_median": 5.1
+ },
+ "student_s2d_sdvae": {
+  "n": 100,
+  "dL_median": 8.2,
+  "absdL_median": 8.2,
+  "dL_dark25_median": 3.5
+ }
+}
