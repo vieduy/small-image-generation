@@ -1,0 +1,5 @@
+n=900 cartoon3d avatars; energy vs klein: coarse  mid  fine  finest | lapvar
+student_dl6g2_decg2          1.01  0.94  1.01  0.99 | 428
+student_dl6g2_decC           1.01  0.94  1.00  0.99 | 426
+student_dl6g2_decW           1.01  0.94  1.03  1.02 | 438
+student_dl6g2_decD           1.01  0.93  0.99  0.98 | 421

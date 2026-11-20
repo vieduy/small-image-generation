@@ -1,0 +1,464 @@
+{
+ "faces": [
+  "face_000",
+  "face_009",
+  "face_018",
+  "face_027",
+  "face_036",
+  "face_045",
+  "face_054",
+  "face_063",
+  "face_072",
+  "face_081",
+  "face_090",
+  "face_099"
+ ],
+ "units": {
+  "full": {
+   "dev": 0.0,
+   "sep": 0.2231,
+   "clip": 0.6292,
+   "gflops": 682.7
+  },
+  "down_blocks.0.attentions.0": {
+   "kind": "attention",
+   "gflops": 17.71,
+   "share": 0.0259,
+   "dev": 0.1881,
+   "sep": 0.2378,
+   "clip": 0.6542
+  },
+  "down_blocks.0.attentions.0.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 15.56,
+   "share": 0.0228,
+   "dev": 0.1665,
+   "sep": 0.2376,
+   "clip": 0.675
+  },
+  "down_blocks.0.attentions.1": {
+   "kind": "attention",
+   "gflops": 17.71,
+   "share": 0.0259,
+   "dev": 0.0379,
+   "sep": 0.2291,
+   "clip": 0.6125
+  },
+  "down_blocks.0.attentions.1.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 15.56,
+   "share": 0.0228,
+   "dev": 0.0532,
+   "sep": 0.2273,
+   "clip": 0.6458
+  },
+  "down_blocks.0.resnets.0": {
+   "kind": "resnet",
+   "gflops": 4.41,
+   "share": 0.0065,
+   "dev": 0.026,
+   "sep": 0.2193,
+   "clip": 0.5875
+  },
+  "down_blocks.0.resnets.1": {
+   "kind": "resnet",
+   "gflops": 4.41,
+   "share": 0.0065,
+   "dev": 0.1471,
+   "sep": 0.242,
+   "clip": 0.6333
+  },
+  "down_blocks.1.attentions.0": {
+   "kind": "attention",
+   "gflops": 29.77,
+   "share": 0.0436,
+   "dev": 0.1291,
+   "sep": 0.2518,
+   "clip": 0.6333
+  },
+  "down_blocks.1.attentions.0.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0298,
+   "sep": 0.2277,
+   "clip": 0.6333
+  },
+  "down_blocks.1.attentions.0.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.1952,
+   "sep": 0.2412,
+   "clip": 0.5958
+  },
+  "down_blocks.1.attentions.1": {
+   "kind": "attention",
+   "gflops": 29.77,
+   "share": 0.0436,
+   "dev": 0.0623,
+   "sep": 0.225,
+   "clip": 0.6125
+  },
+  "down_blocks.1.attentions.1.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.022,
+   "sep": 0.2214,
+   "clip": 0.6208
+  },
+  "down_blocks.1.attentions.1.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.3027,
+   "sep": 0.2968,
+   "clip": 0.4625
+  },
+  "down_blocks.1.resnets.1": {
+   "kind": "resnet",
+   "gflops": 4.35,
+   "share": 0.0064,
+   "dev": 0.0386,
+   "sep": 0.2368,
+   "clip": 0.625
+  },
+  "down_blocks.2.attentions.0": {
+   "kind": "attention",
+   "gflops": 52.67,
+   "share": 0.0772,
+   "dev": 0.0451,
+   "sep": 0.2205,
+   "clip": 0.6417
+  },
+  "down_blocks.2.attentions.0.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0325,
+   "sep": 0.2238,
+   "clip": 0.6375
+  },
+  "down_blocks.2.attentions.0.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0277,
+   "sep": 0.2157,
+   "clip": 0.6292
+  },
+  "down_blocks.2.attentions.0.transformer_blocks.2": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0183,
+   "sep": 0.2232,
+   "clip": 0.6375
+  },
+  "down_blocks.2.attentions.0.transformer_blocks.3": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.023,
+   "sep": 0.2175,
+   "clip": 0.6083
+  },
+  "down_blocks.2.attentions.1": {
+   "kind": "attention",
+   "gflops": 52.67,
+   "share": 0.0772,
+   "dev": 0.1454,
+   "sep": 0.2306,
+   "clip": 0.5917
+  },
+  "down_blocks.2.attentions.1.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0527,
+   "sep": 0.2283,
+   "clip": 0.6042
+  },
+  "down_blocks.2.attentions.1.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0406,
+   "sep": 0.2308,
+   "clip": 0.6167
+  },
+  "down_blocks.2.attentions.1.transformer_blocks.2": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0179,
+   "sep": 0.2227,
+   "clip": 0.6125
+  },
+  "down_blocks.2.attentions.1.transformer_blocks.3": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0302,
+   "sep": 0.2276,
+   "clip": 0.6333
+  },
+  "down_blocks.2.resnets.1": {
+   "kind": "resnet",
+   "gflops": 3.32,
+   "share": 0.0049,
+   "dev": 0.1063,
+   "sep": 0.2518,
+   "clip": 0.6
+  },
+  "up_blocks.0.attentions.0": {
+   "kind": "attention",
+   "gflops": 52.67,
+   "share": 0.0772,
+   "dev": 0.2288,
+   "sep": 0.138,
+   "clip": 0.1875
+  },
+  "up_blocks.0.attentions.0.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.1032,
+   "sep": 0.2071,
+   "clip": 0.425
+  },
+  "up_blocks.0.attentions.0.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.103,
+   "sep": 0.2101,
+   "clip": 0.4875
+  },
+  "up_blocks.0.attentions.0.transformer_blocks.2": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0619,
+   "sep": 0.1976,
+   "clip": 0.5792
+  },
+  "up_blocks.0.attentions.0.transformer_blocks.3": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0839,
+   "sep": 0.1823,
+   "clip": 0.4417
+  },
+  "up_blocks.0.attentions.1": {
+   "kind": "attention",
+   "gflops": 52.67,
+   "share": 0.0772,
+   "dev": 0.1779,
+   "sep": 0.1996,
+   "clip": 0.4208
+  },
+  "up_blocks.0.attentions.1.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0983,
+   "sep": 0.227,
+   "clip": 0.6125
+  },
+  "up_blocks.0.attentions.1.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0557,
+   "sep": 0.2212,
+   "clip": 0.5958
+  },
+  "up_blocks.0.attentions.1.transformer_blocks.2": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0645,
+   "sep": 0.2107,
+   "clip": 0.5792
+  },
+  "up_blocks.0.attentions.1.transformer_blocks.3": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0451,
+   "sep": 0.2096,
+   "clip": 0.6
+  },
+  "up_blocks.0.attentions.2": {
+   "kind": "attention",
+   "gflops": 52.67,
+   "share": 0.0772,
+   "dev": 0.0908,
+   "sep": 0.2021,
+   "clip": 0.5333
+  },
+  "up_blocks.0.attentions.2.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0389,
+   "sep": 0.2236,
+   "clip": 0.6208
+  },
+  "up_blocks.0.attentions.2.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0276,
+   "sep": 0.2245,
+   "clip": 0.6083
+  },
+  "up_blocks.0.attentions.2.transformer_blocks.2": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0188,
+   "sep": 0.2188,
+   "clip": 0.6
+  },
+  "up_blocks.0.attentions.2.transformer_blocks.3": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0314,
+   "sep": 0.2159,
+   "clip": 0.5875
+  },
+  "up_blocks.1.attentions.0": {
+   "kind": "attention",
+   "gflops": 29.77,
+   "share": 0.0436,
+   "dev": 0.0487,
+   "sep": 0.2206,
+   "clip": 0.6
+  },
+  "up_blocks.1.attentions.0.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0235,
+   "sep": 0.2239,
+   "clip": 0.5708
+  },
+  "up_blocks.1.attentions.0.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0379,
+   "sep": 0.223,
+   "clip": 0.5833
+  },
+  "up_blocks.1.attentions.1": {
+   "kind": "attention",
+   "gflops": 29.77,
+   "share": 0.0436,
+   "dev": 0.0274,
+   "sep": 0.2208,
+   "clip": 0.6333
+  },
+  "up_blocks.1.attentions.1.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0136,
+   "sep": 0.2267,
+   "clip": 0.6208
+  },
+  "up_blocks.1.attentions.1.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0218,
+   "sep": 0.2221,
+   "clip": 0.6083
+  },
+  "up_blocks.1.attentions.2": {
+   "kind": "attention",
+   "gflops": 29.77,
+   "share": 0.0436,
+   "dev": 0.0216,
+   "sep": 0.2198,
+   "clip": 0.6167
+  },
+  "up_blocks.1.attentions.2.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0083,
+   "sep": 0.2258,
+   "clip": 0.6292
+  },
+  "up_blocks.1.attentions.2.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 13.81,
+   "share": 0.0202,
+   "dev": 0.0089,
+   "sep": 0.2243,
+   "clip": 0.6167
+  },
+  "mid_block.attentions.0": {
+   "kind": "attention",
+   "gflops": 52.67,
+   "share": 0.0772,
+   "dev": 0.1746,
+   "sep": 0.0965,
+   "clip": 0.2417
+  },
+  "mid_block.attentions.0.transformer_blocks.0": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.1013,
+   "sep": 0.2137,
+   "clip": 0.5833
+  },
+  "mid_block.attentions.0.transformer_blocks.1": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.071,
+   "sep": 0.213,
+   "clip": 0.6333
+  },
+  "mid_block.attentions.0.transformer_blocks.2": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0592,
+   "sep": 0.2113,
+   "clip": 0.5958
+  },
+  "mid_block.attentions.0.transformer_blocks.3": {
+   "kind": "tlayer",
+   "gflops": 12.76,
+   "share": 0.0187,
+   "dev": 0.0806,
+   "sep": 0.1857,
+   "clip": 0.575
+  },
+  "mid_block.resnets.0": {
+   "kind": "resnet",
+   "gflops": 3.32,
+   "share": 0.0049,
+   "dev": 0.0938,
+   "sep": 0.2433,
+   "clip": 0.6292
+  },
+  "mid_block.resnets.1": {
+   "kind": "resnet",
+   "gflops": 3.32,
+   "share": 0.0049,
+   "dev": 0.0454,
+   "sep": 0.2343,
+   "clip": 0.6167
+  }
+ }
+}

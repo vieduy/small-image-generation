@@ -120,6 +120,8 @@ def main():
                     "step 2 = UNet + adapter at sigma s. Tokens frozen. Inference: student_infer.py (2 steps for --refine-tasks)")
     ap.add_argument("--lora-scope", default="all", choices=["all", "mid_up0"], help="#4 (2026-11-20): mid_up0 = LoRA only in "
                     "mid_block + up_blocks.0 (where the influence map says the option acts) -> smaller style packs")
+    ap.add_argument("--prune", default="", help="Plan A: name of a set in configs/prune_sets.json (S70, S60): residual units removed; "
+                    "saved as prune.json")
     ap.add_argument("--drop-attn2", default="", help="#5: comma list of groups whose cross-attention is removed (down,up1 ...); "
                     "saved as drop_attn2.json")
     ap.add_argument("--tokens-only", action="store_true", help="#4: freeze the whole UNet, train only the option tokens (smallest pack)")
@@ -223,6 +225,12 @@ def main():
         assert not hasattr(unet, "shared_emb"), "init already has a shared trunk"
         print(f"[dl] shared trunk (B): {DLA.install_shared_trunk(unet, emb0[0:1].float(), mask[0:1], trainable=True, scope=a.shared_scope)} {a.shared_scope} "
               f"cross-attention modules read one learned context (init = '{tasks[0]}' token)", flush=True)
+    if a.prune:
+        assert not hasattr(unet, "_prune"), "init is already pruned"
+        n0 = sum(p.numel() for p in unet.parameters())
+        DLA.install_prune(unet, json.load(open(ROOT / "configs/prune_sets.json"))[a.prune])
+        print(f"[dl] prune {a.prune}: {len(unet._prune)} units removed, params {n0 / 1e6:.0f}M -> "
+              f"{sum(p.numel() for p in unet.parameters()) / 1e6:.0f}M", flush=True)
     if a.drop_attn2:
         assert not hasattr(unet, "_drop_attn2"), "init already drops cross-attention"
         print(f"[dl] drop attn2 in {a.drop_attn2}: {DLA.install_drop_attn2(unet, a.drop_attn2.split(','))} modules removed", flush=True)
@@ -569,6 +577,8 @@ def main():
         torch.save({"emb": unet_raw.shared_emb.detach().cpu(), "mask": unet_raw.shared_mask.cpu(), "scope": a.shared_scope}, out / "shared_ctx.pt")
     elif hasattr(unet_raw, "shared_emb"):  # init had a (frozen) shared trunk: keep it
         torch.save({"emb": unet_raw.shared_emb.detach().cpu(), "mask": unet_raw.shared_mask.cpu(), "scope": unet_raw._shared_scope}, out / "shared_ctx.pt")
+    if hasattr(unet_raw, "_prune"):
+        (out / "prune.json").write_text(json.dumps({"units": unet_raw._prune}))
     if hasattr(unet_raw, "_drop_attn2"):
         (out / "drop_attn2.json").write_text(json.dumps({"groups": unet_raw._drop_attn2}))
     if hasattr(unet_raw, "_half_head"):

@@ -1,0 +1,14 @@
+99M	weights/student/an_all/unet_lora
+50M	weights/student/an_b1/unet_lora
+50M	weights/student/an_b1_dmd/unet_lora
+50M	weights/student/an_dmd/unet_lora
+50M	weights/student/an_dmd2/unet_lora
+50M	weights/student/an_dmd3/unet_lora
+50M	weights/student/an_dmd4/unet_lora
+50M	weights/student/an_dmd5/unet_lora
+50M	weights/student/an_lora/unet_lora
+50M	weights/student/an_lora_g/unet_lora
+50M	weights/student/an_lora_g2/unet_lora
+50M	weights/student/an_lora_m4/unet_lora
+52M	weights/student/an_mu/unet_lora
+6.6M	weights/student/an_tok/task_emb.pt

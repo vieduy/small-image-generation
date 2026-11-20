@@ -1055,3 +1055,38 @@ GPU 0 had ~41 GB free by 14:22. The only other process was the root vLLM engine 
   20 modules (all down blocks + up_blocks.1). FLOPs (`scripts/flops_drop.py`, results/flops_drop_down_up1.json): hhB0
   595.2 -> 532.4 GFLOPs per image (-10.6%), per 22-option set 6,882 -> 6,542 (-4.9%; the down path is already shared).
   dropX = hhB0 + drop, 3000 steps lr 2e-5, dl6g2 losses, full evals (h200_idea.sh).
+
+### 2026-11-20 — Plan A (smaller student) queued; Plan B (Sana-Sprint base) planned, not started
+- User: "queue A first if GPU available". **A1** `scripts/block_scan.py` (training-free): each removable unit of dl6g2 is
+  bypassed alone (output := input; 36 transformer layers, 13 attention modules, 6 down/mid resnets with matching channels;
+  up resnets consume skip features -> handled when building the model) and scored on 12 synthetic faces x 22 options
+  (LPIPS change, option separation, CLIP expression acc) with its exact FLOP share; ranking = change per GFLOP saved.
+  CPU check: bypass hooks work and restore the exact output when removed. Queued by `scripts/queue_A1.sh` on dev-duyhv
+  (starts on the first GPU that stays free for 60 s). Next: A2 build S70/S50 students from the ranking (+ up-path resnet
+  removal with matching skips), A3 distil from dl6g2 (output + feature matching + our losses), A4 add shared trunk + half
+  head, A5 evals + Core ML size.
+- Plan B (Sana-Sprint 0.6B, weights cached; Sana weights listed as Apache-2.0 in the 2026-11-17 base research, legal to
+  confirm): B0 feasibility first (licence, DC-AE decoder cost at 512, Core ML conversion, size) before any training.
+
+### 2026-11-20 ~02:50 UTC — results of the production quick wins + Plan A
+- **3a 2-step avatar: NO.** detail_bands (v2 avatars, vs klein) dl6g2+decg2 1.01/0.94/1.01/0.99 | 428; rf50 0.98/0.91/0.98/0.95
+  | 409; rf30 0.98/0.91/0.98/0.94 | 410. Likeness rf30 .248/.163/.181 (= dl6g2), skin dark25 +32.5. The second step softens
+  slightly: the decg2 decoder already recovered the detail the earlier 2-step gain was about. #3 (2-step stickers) dropped too.
+- **#5 dropX: not worth it.** hhB0 minus down + up_blocks.1 cross-attention: detail 1.00/422 (= hhB0), expression 0.531
+  (hhB0 0.552), sticker id top-5 0.354 (0.377), likeness .239/.160/.178 (.242/.163/.184), for -10.6% per image / -4.9% per set.
+- **2a decA (RGBA decoder): YES.** val RGB LPIPS 0.2137 (decg2 0.2135), alpha vs BiRefNet_lite IoU 0.977 / MAE 0.015 (val).
+  On real outputs (alpha_eval, same RGB): stickers IoU 0.959, MAE 0.024, boundary MAE 0.31; avatars IoU 0.995; sticker
+  post-process pass 100% with the decoder's own alpha (= BiRefNet 100%). -> the phone can drop BiRefNet.
+- **2b decW / decD: no meaningful gain** so far. expr_eval: decg2 0.583/0.358, decC (control) 0.588/0.350, decW 0.596/0.344,
+  decD 0.585/0.362; avatar likeness identical (.248-.249/.164/.178-.180). detail_bands still running.
+- **#4 style packs (anime, base dl6g2): mid+up0 pack WINS.** v2 avatar/sticker id, style_dino avatar/sticker; real id; skin:
+  an_all (99 MB fp32 / ~50 MB fp16) .408/.346, .578/.527; real .266/.264; dL 8.6, dark25 3.9.
+  **an_mu (52 MB fp32 / ~26 MB fp16) .417/.347, .580/.531; real .297/.284; dL 9.0, dark25 4.5** -> equal or better at half size.
+  an_tok (tokens only, 6.6 MB fp32) .439/.348, .580/.525; real .257/.209 (sticker id low); dL 9.8, dark25 7.5 -> needs a visual check.
+  old dl_an (dl1 base) .400/.333, .575/.529.
+- **Plan A1 block scan** (`scripts/block_scan.py`, results/block_scan_dl6g2.{json,txt}; FLOP lookup fixed: FlopCounterMode names
+  modules '<Class>.<path>'): single removals up to ~40% of FLOPs each cost dev <= 0.041 and keep CLIP ~0.60-0.64; the next
+  units are mid_block / up_blocks.0 attention (CLIP 0.24 / 0.42, = the influence map). Sets (configs/prune_sets.json, greedy
+  by dev per GFLOP): **S70** 9 units, -197 GFLOPs (-29%), 390M -> 299M params; **S60** 15 units, -274 GFLOPs (-40%), -> 241M.
+  `dl_arch.install_prune` (prune.json auto-load), `train_dl.py --prune`. Launched `scripts/planA_train.sh` on dev-duyhv:
+  pS70 (GPU 0), pS60 (GPU 1), from dl6g2, 4000 steps, lr 2e-5, dl6g2 losses, full evals.

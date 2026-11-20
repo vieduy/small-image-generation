@@ -1,0 +1,62 @@
+{
+ "outputs/student_dl6g2_decA/cartoon3d/sticker": {
+  "mae": 0.0243,
+  "iou": 0.9593,
+  "bmae": 0.3097,
+  "pass_dec": 1.0,
+  "pass_ref": 1.0,
+  "n": 380,
+  "worst_iou": [
+   [
+    0.366,
+    "subj_009"
+   ],
+   [
+    0.43,
+    "subj_016"
+   ],
+   [
+    0.562,
+    "subj_014"
+   ],
+   [
+    0.615,
+    "subj_022"
+   ],
+   [
+    0.638,
+    "subj_005"
+   ]
+  ]
+ },
+ "outputs/student_dl6g2_decA/cartoon3d/avatar": {
+  "mae": 0.0036,
+  "iou": 0.995,
+  "bmae": 0.1488,
+  "pass_dec": 1.0,
+  "pass_ref": 1.0,
+  "n": 400,
+  "worst_iou": [
+   [
+    0.904,
+    "face_054"
+   ],
+   [
+    0.952,
+    "face_088"
+   ],
+   [
+    0.962,
+    "face_041"
+   ],
+   [
+    0.965,
+    "fe2_207"
+   ],
+   [
+    0.973,
+    "fe2_289"
+   ]
+  ]
+ }
+}

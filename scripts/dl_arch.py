@@ -31,6 +31,10 @@ def load_unet(path=None, dtype=torch.float32):
     if sc.exists():  # shared-trunk student (idea B): down/mid cross-attention reads one learned context, not the task token
         c = torch.load(sc)
         install_shared_trunk(unet, c["emb"].to(dtype), c["mask"], scope=c.get("scope", "down_mid"))
+    pr = Path(path).parent / "prune.json"
+    if pr.exists():  # Plan A smaller student: these residual units are removed
+        import json
+        install_prune(unet, json.loads(pr.read_text())["units"])
     da = Path(path).parent / "drop_attn2.json"
     if da.exists():  # #5: cross-attention modules removed where the option has no effect
         import json
@@ -83,6 +87,31 @@ def install_shared_trunk(unet, emb, mask, trainable=False, scope="down_mid"):
     unet._shared_trunk_modules = n
     unet._shared_scope = scope
     return n
+
+
+class _SkipLayer(torch.nn.Module):
+    """A removed transformer layer (residual unit): returns its input."""
+
+    def forward(self, hidden_states, *args, **kwargs):
+        return hidden_states
+
+
+class _SkipAttention(torch.nn.Module):
+    """A removed attention module (Transformer2D, residual): returns (input,), as called with return_dict=False."""
+
+    def forward(self, hidden_states, *args, **kwargs):
+        return (hidden_states,)
+
+
+def install_prune(unet, units):
+    """Plan A (2026-11-20): replace residual units (names from scripts/block_scan.py) by identity modules; their weights are
+    dropped (smaller model). units: '...attentions.i' (whole attention module) or '...attentions.i.transformer_blocks.j'."""
+    for n in sorted(units, key=lambda x: -x.count(".")):  # layers before whole modules
+        parent, idx = n.rsplit(".", 1)
+        lst = unet.get_submodule(parent)
+        lst[int(idx)] = _SkipLayer() if ".transformer_blocks." in n else _SkipAttention()
+    unet._prune = sorted(units)
+    return len(units)
 
 
 class _ZeroAttn:
