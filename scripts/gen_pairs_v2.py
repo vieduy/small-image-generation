@@ -156,6 +156,44 @@ def plan_full(a):
           f"{min(per_t.values())}-{max(per_t.values())} each)", flush=True)
 
 
+def plan_style(a):
+    """New chat styles (2026-11-20): same synthetic photos/captions/seeds as the cartoon3d v2 run, another style text.
+    --photos N random synthetic photos; avatar x --avatar-n, 1 plain sticker, and either --tasks (these expressions for
+    every photo, e.g. a preview) or up to --expr-per per expression (<= 5 per photo, as plan-full)."""
+    rnd = random.Random(20261120)
+    rs = [json.loads(l) for l in open(D / "manifest_round4.jsonl")]
+    base = {r["id"]: r for r in rs if r["task"] == "avatar" and r["is_face"] and r["id"][0] in "fc"}
+    ver = {r["id"]: r["extra_verified"] for r in rs if r.get("extra_verified") is not None}
+    src = ROOT / "data/pairs_v2/cartoon3d"
+    caps = load_caps(src)
+    ids = sorted(i for i in base if i in caps and str(caps[i].get("child", "no")).lower() != "yes")
+    ids = sorted(rnd.sample(ids, min(a.photos, len(ids))))
+    J = lambda i, t, var=0: {"id": i, "task": t, "var": var, "seed": seed_for(base[i]["seed"], t) + 100003 * var,  # noqa: E731
+                             "gen_prompt": base[i]["prompt"], "old_extra_verified": ver.get(i)}
+    jobs = [J(i, "avatar", v) for i in ids for v in range(a.avatar_n)] + [J(i, "sticker") for i in ids]
+    ex = list(expr_phrases())
+    if a.tasks:
+        jobs += [J(i, t) for i in ids for t in a.tasks.split(",")]
+    else:
+        combos = [(i, t) for i in ids for t in ex]
+        rnd.shuffle(combos)
+        per_t, per_i = {t: 0 for t in ex}, {}
+        for i, t in combos:
+            if per_t[t] < a.expr_per and per_i.get(i, 0) < 5:
+                jobs.append(J(i, t)); per_t[t] += 1; per_i[i] = per_i.get(i, 0) + 1
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    with open(out / "jobs.jsonl", "w") as f:
+        for j in jobs:
+            f.write(json.dumps(j) + "\n")
+    with open(out / "captions_from_cartoon3d.jsonl", "w") as f:  # reuse the VLM attributes (style-independent)
+        for i in ids:
+            f.write(json.dumps(caps[i]) + "\n")
+    (out / "ffhq_adults.json").write_text("[]")
+    (out / "style.txt").write_text(a.style)
+    print(f"[v2] plan-style {a.style}: {len(ids)} photos, {len(jobs)} jobs", flush=True)
+
+
 def _norm_one(i):
     global _FID
     if "_FID" not in globals():
@@ -309,14 +347,19 @@ def style_text(st, natural):
     return d
 
 
-def build_prompt(j, cap, style_desc, phrases, fc_in):
+def build_prompt(j, cap, style_desc, phrases, fc_in, pv=5, adult_body=True):
     attrs = TP.parse(j["gen_prompt"]) if j.get("gen_prompt") else None
     if attrs and j.get("old_extra_verified") is False:  # as gen_pairs.py: never describe an attribute the photo does not show
         attrs = dict(attrs, extra=None)
     tone = TP.tone_word(fc_in.get(src_path(j["id"]))[1]) if attrs else None
+    ph = None if j["task"] == "sticker" else phrases.get(j["task"])
+    if pv >= 6:  # new chat styles (2026-11-20): caption age, no named grey hair, optional adult-body sentence
+        if j["task"] == "avatar":
+            return TP.avatar_prompt_v5(style_desc, cap, tone, attrs)
+        return TP.sticker_prompt_v6(style_desc, cap, tone, attrs, ph, adult_body)
     if j["task"] == "avatar":
         return TP.avatar_prompt_v4(style_desc, cap, tone, attrs)
-    return TP.sticker_prompt_v5(style_desc, cap, tone, attrs, None if j["task"] == "sticker" else phrases[j["task"]])
+    return TP.sticker_prompt_v5(style_desc, cap, tone, attrs, ph)
 
 
 # ------------------------------------------------------------------ gen
@@ -329,11 +372,12 @@ def gen(a):
     jobs = [json.loads(l) for l in open(out / "jobs.jsonl")][a.shard:: a.nshards]
     caps = load_caps(out)
     jobs = [j for j in jobs if not out_path(out, j).exists()]
-    st = S.load_styles()["cartoon3d"]
+    st = S.load_styles()[a.style]
     phrases = expr_phrases()
     fc_in = M.FaceCache(M.FaceID(), D)  # read-only use of the round-4 input cache (never saved here)
     for j in jobs:
-        j["teacher_prompt"] = build_prompt(j, caps[j["id"]], style_text(st, a.natural_skin), phrases, fc_in)
+        j["teacher_prompt"] = build_prompt(j, caps[j["id"]], style_text(st, a.natural_skin) if a.style == "cartoon3d" else st["description"],
+                                           phrases, fc_in, a.pv, st.get("adult_body", True))
     kb = KleinBatch()
     if a.compile:
         if a.check_compile and jobs:  # compiled vs eager on the first batch
@@ -393,7 +437,7 @@ def score(a):
     fc_q = M.FaceCache(fid, FNORM, name="_face_cache_tmp.pkl")
     fc_out = M.FaceCache(fid, out)
     emb, mat = M.Embedder(), M.Matter()
-    refs = [Image.open(p) for p in sorted((ROOT / "styles/cartoon3d").glob("ref_*.png"))]
+    refs = [Image.open(p) for p in sorted((ROOT / "styles" / a.style).glob("ref_*.png"))]
     rd, _ = emb(refs)
     rdm = torch.nn.functional.normalize(rd.mean(0), dim=0)
     # identity galleries: own + 99 neighbours of the same source, in sorted order (gen_pairs.py id_rank)
@@ -433,7 +477,7 @@ def score(a):
         fo, lo = fc_out.get(p)
         rk = id_rank(j["id"], fo)
         r["id_rank100"], r["gallery"] = (rk if rk else (None, None))
-        r["id_pass"] = r["id_rank100"] is not None and r["id_rank100"] <= (10 if j["task"].startswith("expr_") else 5)
+        r["id_pass"] = r["id_rank100"] is not None and r["id_rank100"] <= (10 if j["task"].startswith("expr_") else a.id_rank)
         _, li = (fc_q if j["id"].startswith("q") else fc_in).get(src_path(j["id"]))
         r["dL"] = None if li is None or lo is None else round(lo - li, 1)
         at = TP.parse(j["gen_prompt"]) if j.get("gen_prompt") else None
@@ -555,9 +599,14 @@ def write_manifest(out, rows):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["plan-test", "plan-full", "plan-real", "finalize-real", "caption", "caption-ids", "gen", "score", "merge",
+    ap.add_argument("stage", choices=["plan-style", "plan-test", "plan-full", "plan-real", "finalize-real", "caption", "caption-ids", "gen", "score", "merge",
                              "rekeep", "skincolor"])
     ap.add_argument("--ffhq-pool", type=int, default=27500)
+    ap.add_argument("--id-rank", type=int, default=5, help="score: avatar/sticker identity rank limit among 100 (chibi: 10)")
+    ap.add_argument("--pv", type=int, default=5, help="prompt version: 5 = data v2 (cartoon3d), 6 = new styles (2026-11-20)")
+    ap.add_argument("--style", default="cartoon3d", help="styles/<name>/style.yaml (gen text, score refs)")
+    ap.add_argument("--photos", type=int, default=5000, help="plan-style: synthetic photos")
+    ap.add_argument("--tasks", default="", help="plan-style: these expressions for every photo (preview)")
     ap.add_argument("--ffhq-adults", type=int, default=20000)
     ap.add_argument("--workers", type=int, default=48)
     ap.add_argument("--natural-skin", type=int, default=0)
@@ -573,5 +622,5 @@ if __name__ == "__main__":
     ap.add_argument("--check-compile", type=int, default=1)
     a = ap.parse_args()
     a.out = str(ROOT / a.out) if not a.out.startswith("/") else a.out
-    {"plan-test": plan_test, "plan-full": plan_full, "caption": caption, "caption-ids": caption_ids, "gen": gen, "score": score,
+    {"plan-style": plan_style, "plan-test": plan_test, "plan-full": plan_full, "caption": caption, "caption-ids": caption_ids, "gen": gen, "score": score,
      "merge": merge, "rekeep": rekeep, "skincolor": skincolor, "plan-real": plan_real, "finalize-real": finalize_real}[a.stage](a)

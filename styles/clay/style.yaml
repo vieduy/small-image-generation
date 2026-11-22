@@ -1,0 +1,19 @@
+name: clay
+description: handmade clay figure, claymation style, matte plasticine texture with
+  subtle fingerprint marks, soft rounded sculpted shapes, simple bead eyes, warm soft
+  lighting
+short: clay figure character
+refs:
+- ref_000.png
+- ref_001.png
+- ref_002.png
+- ref_003.png
+- ref_004.png
+- ref_005.png
+- ref_006.png
+- ref_007.png
+default_ref: ref_000.png
+lora: null
+license: self-generated with FLUX.2-klein-4B (Apache-2.0); prompts/seeds in manifest.jsonl
+avatar_prompt: (see configs/prompts.yaml)
+sticker_prompt: (see configs/prompts.yaml)

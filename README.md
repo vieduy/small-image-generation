@@ -1090,3 +1090,355 @@ GPU 0 had ~41 GB free by 14:22. The only other process was the root vLLM engine 
   by dev per GFLOP): **S70** 9 units, -197 GFLOPs (-29%), 390M -> 299M params; **S60** 15 units, -274 GFLOPs (-40%), -> 241M.
   `dl_arch.install_prune` (prune.json auto-load), `train_dl.py --prune`. Launched `scripts/planA_train.sh` on dev-duyhv:
   pS70 (GPU 0), pS60 (GPU 1), from dl6g2, 4000 steps, lr 2e-5, dl6g2 losses, full evals.
+
+### 2026-11-20 — paper theory draft (user: back to the paper, target a CVPR/ICCV 2027 workshop; "theory first, exp later")
+- `docs/paper_theory/theory.tex` -> `theory.pdf` (6 pages, LaTeX): "Where the Option Lives". Option sensitivity (causal
+  influence map) -> observations (inert encoder, mid+up0 locus, unused up1 cross-attention, distributed within the locus,
+  down2 global but inert); why (shared sufficient information across options + fixed noise half; global edits need global
+  mixing after the option enters); consequences: conditioning frontier + speedup bound N*C_full/(C_T+N*C_H) -> C_full/C_H
+  (hhB0 2.20x = 96% of 2.29x), exact half head by a dependency-cone argument (GroupNorm statistics the only error,
+  per-token norms would make it exact), localised style packs; predictions P1-P6 for the experiment phase.
+  All numbers from results/influence_dl6g2_avatar.json, halfhead_check_dlB.json, block_scan_dl6g2.txt and the README runs.
+
+### 2026-11-20 ~04:35 UTC — Plan A results: pruned students pS70 / pS60 (6000 steps from dl6g2, full evals)
+| run | GFLOPs/img | detail fine / lapvar | expr acc / sticker id top5 (expr_eval mean of 21) | avatar id_cos v2/real/selfie | real dark25 dL |
+|---|---|---|---|---|---|
+| dl6g2+decg2 | 683 | 1.01 / 428 | 0.583 / 0.346 | .248/.165/.179 | +32.5 |
+| hhB0 | 595 (2.2x per set) | 1.00 / 422 | 0.552 / 0.377 | .242/.163/.184 | +32.9 |
+| pS70 (-29%) | ~486 | 0.95 / 392 | 0.542 / 0.325 | .204/.151/.152 | +32.5 |
+| pS60 (-40%) | ~409 | 0.91 / 376 | 0.544 / 0.312 | .170/.144/.130 | +30.6 |
+- **Verdict: NO.** Removing encoder/renderer units costs likeness (-18% / -31% v2 avatar id) and detail; the menu itself
+  survives better (expr -0.04). hhB0 stays the speed path. Paper note: consistent with the theory — the scan's cheap units are
+  option-free, but they carry identity/detail, so the option map is not a sufficient pruning criterion.
+
+### 2026-11-20 ~07:35 UTC — paper P2: can the option enter AFTER the last self-attention? (user: "go with p2 first")
+- New shared-trunk scopes (`dl_arch.SHARED_SCOPES`, `train_dl --shared-scope`): `down_mid_up0` = down + mid + up_blocks.0
+  cross-attention read one learned context, the option enters only in up_blocks.1 (6 modules, no self-attention after it);
+  `only_up0a2` (control) = the option enters only in up_blocks.0.attentions.2 (4 modules, self-attention still follows inside).
+  Check `scripts/test_scopes_p2.py`: shared = own token -> max diff 0; input of the first option-reading block identical
+  across options (diff 0); counts 30/6 and 32/4.
+- Runs (dlB recipe: from dl6g2, --shared-trunk, lr 2e-5, 6000 steps, dl6g2 losses, full evals, decoder decg2), dev-duyhv:
+  **frUp1** (P2, GPU 1) and **frA2** (P2c, GPU 0; overlaps dl7 for ~30 min). Compare with dlBd (option from mid) / dlB (from up0).
+- Theory correction (to go into the note): a construction shows sharing past the last global mixer is possible in principle
+  (trunk writes face-relative geometry into every position, head = local per-option lookup; deterministic, no coordination
+  needed) -> P2 measures head CAPACITY, not an impossibility.
+- **Pre-registered split for the analysis** (fixed before results): LOCAL = edits on the face only: happy, lol, cry, wow, sad, shy,
+  wink, cool. GLOBAL = new structure outside the face (hands, objects around/above the head): love, angry, think, sleepy,
+  thumbs, wave, ok, facepalm, shrug, party, thanks, night. Prediction: frUp1 loses more on GLOBAL than LOCAL; frA2 ~ dlB.
+
+### 2026-11-20 ~08:45 UTC — P2 first result + NFS I/O incident
+- **NFS I/O errors (~08:32-08:36 UTC; /mnt/project/kchat 12T at 100%, 115 GB free):** pk_chibi died at step 6000 writing its
+  preview image (before saving weights -> rerun on dev-duyhv-2 GPU 1, same recipe, log `logs/style_pk_chibi.log`, failed
+  log kept as `style_pk_chibi_ioerr.log`); the v2 eval of pk_comic and frUp1 failed (`scripts/rerun_v2_eval.sh` re-runs it
+  after each chain). Fix: train_dl.py preview-image save is now non-fatal (running dl7 / frA2 still have the old code).
+- **P2 frUp1 (option enters only in up_blocks.1, after the last self-attention): COLLAPSE, as predicted for global edits.**
+  expr_eval (CLIP acc, pre-registered split): frUp1 all 0.163 | LOCAL 0.339 | GLOBAL 0.045 (chance 0.05);
+  dlB 0.560 | 0.734 | 0.444; dlBd 0.579 | 0.745 | 0.469; dl6g2 0.583 | 0.729 | 0.486. Sticker id top-5 0.581 (stickers ~ avatar,
+  collapse inflates it, as tf_dm). Visual (grids/expr_eval_frUp1_decg2.jpg vs dlB): no hands, hearts, hats or Zzz at all;
+  what survives is on-face and colour-level: sunglasses (cool 1.00), red cheeks (angry), blush (shy), laughing eyes (lol 0.62);
+  shrug / thank-you produce blurred ghost bodies. Control frA2 (option only in up0.attentions.2, self-attention after) pending.
+
+### 2026-11-20 ~09:00 UTC — storage cleanup, group A (user: "delete A")
+- NFS /mnt/project/kchat was at 100% (115 GB free) after I/O errors. Deleted 64 SD/SDXS-era student folders from
+  weights/student (config arch = SD; superseded by DreamLite; results stay in results/ + this README). Kept s5d (old production
+  candidate). List: logs/deleted_2026-11-20_groupA.txt. ~50 GB. Free after: 162 GB. Not deleted (pending decision): SD-VAE
+  latent caches (~31.5 GB), step snapshots (~7 GB), rejected DreamLite runs (~36 GB), tgt512 cache (40 GB, frA2 reads it).
+- **Groups B + D deleted (user: "remove B and D", ~09:10 UTC):** 9 SD-VAE latent caches (data/pairs/*/latents_sdvae*.pt, 31 GB;
+  only the retired train_student.py read them) and 37 of 38 rejected DreamLite runs (hhB4 dropX dl2 dlA4 dlA16 dl6g4 dl6g2s
+  dl6g1 dl5* dlp* dl1_dmd* dl1_det* probe* pS70 pS60 rf50 rf30 dl2_dmd dl2_2s dl_an* dl6g2_tf_*). **dl3 (1.5 GB) could not be
+  removed:** owned by root (written 2026-11-19 05:32), NFS root-squash blocks it from here and from the nodes. The step
+  snapshots of group C (dl2_dmd_s*, dl2_2s_s*, dl3_2s_s*, dl_an_dmd_s*) are now orphaned adapters (their bases are gone).
+  List: logs/deleted_2026-11-20_groupBD.txt. NFS free: 115 GB -> 228 GB.
+- **Items 1-4 deleted (user: "delete them", ~09:20 UTC; nothing running reads them):** 34 of 43 orphaned step snapshots
+  (group C), round-4 latent cache + old backup folders (_backup_expr2_old_prompt, avatar_c1, avatar_c2; manifest_v2 does not
+  reference them), decoder training caches (_alpha_..._8000.npy, _zs_dl6g2_manifest_v2.pt; rebuilt automatically by
+  train_decoder.py), 167 eval-output folders of runs whose weights are gone (baselines kept: dl6g2*, klein_*, hhB0, dlB, dlBd,
+  current runs). Root-owned, not removable from here: dl3, dl3_2s_s*, dl3F_2s_s* (~3 GB). List: logs/deleted_2026-11-20_group1to4.txt.
+  NFS free 228 GB -> 268 GB.
+
+### 2026-11-20 ~09:10 UTC — pk_comic (comic_line pack) results
+- pk_comic (LoRA r32 mid+up0 on dl6g2, 6000 steps, dl6g2 losses, decg2): expr_eval all 0.535 (face-only 0.599, outside-face
+  0.493; dl6g2 cartoon3d 0.583/0.729/0.486), sticker id top-5 0.687, sticker pass 0.99. Likeness id_cos avatar/sticker:
+  v2 .489/.397, real .319/.283, selfie .415/.361 (cartoon3d dl6g2 .248/.221, .165/.172, .179/.183: NOT comparable across
+  styles — the comic look keeps more photo detail). Style DINO vs refs v2 .618/.574. Visual (grids/expr_eval_pk_comic_decg2.jpg):
+  inked comic look, all gestures/accessories present; a few faint hands (wave), small party hat. Verdict vs dl7_comic_line pending.
+
+### 2026-11-20 ~09:30 UTC — comic pack blur check: pk_comic_all (user: "try this")
+- User: comic "thank you" stickers look blurry. Sharpness (median Laplacian variance, pk_comic / klein comic targets, different
+  photos): thanks 0.45, shrug 0.45, party 0.47, ok 0.50 ... avatar 0.65, wink 0.68 -> the whole mid+up0 pack is ~half as sharp
+  as the teacher, worst on two-hand / big-body poses; dl6g2 cartoon3d is crisp on the same poses. Main hypothesis: the pack
+  only adapts the 16x32 blocks; ink lines are drawn by the frozen high-res renderer (up1/up2 + decoder) trained for smooth
+  3D shading (= the theory note's texture limit of localised adaptation). Others: pose averaging, decg2 decoder, under-training.
+- **pk_comic_all**: same as pk_comic but LoRA r32 on ALL blocks (`--lora-scope all`), 6000 steps (copied from pk_comic for a
+  one-variable comparison, unverified), `scripts/style_train_scope.sh` (copy; style_train.sh was running). dev-duyhv-2 GPU 0.
+  Compare sharpness ratios + evals with pk_comic and dl7_comic_line.
+
+### 2026-11-20 ~10:00 UTC — P2 control frA2 + chibi pack results
+- **frA2** (option only in up_blocks.0.attentions.2: 4 cross-attention modules, 3 self-attention layers still follow inside the
+  block): expr all 0.327 | LOCAL 0.708 | GLOBAL 0.073 (dlB 0.560/0.734/0.444; frUp1 0.163/0.339/0.045). Avatar likeness
+  .241/.165/.200 (= dlB), detail 0.98/419, dark25 +32.2 (= dl6g2). Visual: face edits fine (tears, open mouth, red cheeks,
+  sunglasses); NO hands / hats / Zzz; shrug + thank-you = blurred ghost bodies.
+  **Reading:** having self-attention after the option is NOT sufficient for global edits: one late block (3 self-attention
+  layers) restores the LOCAL edits (0.339 -> 0.708) but not the GLOBAL ones (0.045 -> 0.073). Global edits need the option
+  early / in many layers with a lot of global processing after it (dlB: all 12 up0 modules). The P2c control does not separate
+  "fewer option inputs" from "less global depth after the option" (both reduced); a follow-up would vary them separately.
+- **pk_chibi** (rerun, mid+up0 LoRA on dl6g2, 22.3k pairs, 6000 steps): expr all 0.581 | LOCAL 0.719 | GLOBAL 0.490 (= dl6g2
+  cartoon3d), sticker pass 1.00, sticker id top-5 0.192; avatar likeness v2/real/selfie .192/.115/.128, sticker .165/.116/.137
+  (lower than cartoon3d: big-eye chibi look, and its data used the looser id-rank 10). Visual (grids/expr_eval_pk_chibi_decg2.jpg):
+  clean chibi look (big head, small body), all gestures and accessories present, crisp - no comic-style blur (smooth shading
+  is within what the frozen renderer draws, consistent with the texture-limit reading of pk_comic).
+- **dl7 evals parallelised (~10:30 UTC, user: "utilize idle GPUs"):** stopped the sequential eval chain (style_chain_node1.sh /
+  style_train.sh joint; train_dl.py keeps running, checked: step 11300 -> 11400) and queued `scripts/dl7_eval_parallel.sh`:
+  cartoon3d view + skin + detail on dev-duyhv GPU 0, dl7_comic_line on dev-duyhv GPU 1, dl7_chibi on dev-duyhv-2 GPU 1; each
+  waits for the "[dl] view dl7_chibi" line (weights + per-style views saved). Saves ~45 min.
+
+### 2026-11-20 ~10:50 UTC — D: comic_line phone decoder decCm (user: "let do D")
+- `train_decoder.py` now accepts LoRA style packs as the student (base UNet + LoRA merged, as student_infer.py; backup
+  scratchpad train_decoder.py.bak_pack). decCm = decg2 fine-tuned on pk_comic's own latents -> klein comic targets
+  (52.7k pairs x2 flip), L1 + LPIPS 512 + DINOv2 critic 0.1 from step 500, lr 1e-4, 5000 steps (copied from decC, unverified),
+  `scripts/dec_comic.sh`, dev-duyhv GPU 1. Eval: expr_eval + v2 quality with pk_comic + decCm; `scripts/sharp_ratio.py`
+  (student / teacher Laplacian variance per expression; pk_comic + decg2 baseline: thanks 0.45 ... mean 0.54).
+  Decoder-only change on the phone: 1.2M params (~2.5 MB fp16), same speed.
+
+### 2026-11-20 ~11:40 UTC — comic blur: the decoder was the cause (decCm), not the pack scope
+- sharp_ratio.py had failed inside dec_comic.sh (system python3, no numpy); rerun with $VENV (results/sharp_comic_decCm.txt).
+  Student / klein-target Laplacian variance per expression, mean of 10: **pk_comic + decg2 0.54; pk_comic_all + decg2 0.52;
+  pk_comic + decCm 0.83** (thanks 0.45 -> 0.68, shrug 0.45 -> 0.77, ok 0.50 -> 0.84, wink 0.68 -> 0.97).
+- expr_eval: pk_comic+decg2 0.535 / id top-5 0.687; pk_comic_all+decg2 0.531 / 0.688; **pk_comic+decCm 0.546 / 0.706**.
+- Reading: LoRA on all blocks does not sharpen (0.52 vs 0.54) -> the frozen high-res UNet blocks are not the bottleneck; the
+  cartoon3d-tuned decoder smoothed the ink lines. A per-style phone decoder (1.2M params, ~2.5 MB) fixes it.
+- **Recipe decision (user 2026-11-20):** every new style = (1) LoRA pack on mid + up_blocks.0 (an_mu result) -> (2) freeze it,
+  fine-tune that style's phone decoder on the pack's own latents (decCm recipe), RGBA (decA recipe) -> (3) keep the decoder only
+  if sharp_ratio / expr_eval improve. Sharpness vs teacher: cartoon3d 0.50 (orig dec) -> 0.64 (decg2); chibi + decg2 0.60;
+  comic + decg2 0.54 -> decCm 0.83. On-device switching tested later by the user.
+
+### 2026-11-20 ~12:40 UTC — dl7 (one joint model: cartoon3d + comic_line + chibi) vs separate packs
+dl7 = full fine-tune of dl6g2 on all three styles (style x option tokens), 18000 steps, lr 2e-5, 128,699 pairs, 232.6 min.
+expr_eval (all / face-only / outside, split as reports/e1_status.md), sticker id top-5, likeness id_cos avatar v2/real/selfie,
+sharpness vs teacher (sharp_ratio.py), all with decg2 unless named:
+| style | model | expr all / face / outside | sticker id top-5 | avatar likeness v2/real/selfie | sharpness |
+|---|---|---|---|---|---|
+| cartoon3d | dl6g2 | 0.583 / 0.729 / 0.486 | 0.346 | .248/.164/.179 | detail 1.01/428 |
+| cartoon3d | dl7 | 0.544 / 0.724 / 0.424 | 0.371 | .235/.162/.181 | detail 0.98/412 |
+| comic | pk_comic (mid+up0 pack) | 0.535 / 0.599 / 0.493 | 0.687 | .489/.319/.415 | 0.54 |
+| comic | pk_comic + decCm | 0.546 / 0.609 / 0.503 | 0.706 | .478 (v2) | **0.83** |
+| comic | dl7 comic | 0.479 / 0.583 / 0.410 | 0.648 | .485/.294/.407 | 0.55 |
+| chibi | pk_chibi | 0.581 / 0.719 / 0.490 | 0.192 | .192/.115/.128 | 0.60 |
+| chibi | dl7 chibi | 0.556 / 0.682 / 0.472 | 0.202 | .185/.128/.138 | 0.60 |
+Skin real dL median / dark25: dl6g2 17.3/32.5, dl7 16.3/31.8 (klein 9.0/6.7).
+**Verdict: separate packs win.** dl7 loses outside-face expressions in every style (cartoon3d -0.06, comic -0.08 vs the pack,
+chibi -0.02) and cartoon3d detail (0.98/412 vs 1.01/428); it gains only sticker id top-5 (+0.025 cartoon3d, +0.01 chibi) and
+slightly better real/selfie chibi likeness. Its only advantage is one model instead of base + packs. Keep dl6g2 + mid+up0 packs
+(+ per-style decoders). dl7's 18000 steps were copied from an older recipe, not curve-based (memory: justify-step-counts).
+
+### 2026-11-20 ~13:20 UTC — Plan B0: Sana-Sprint 0.6B feasibility (user: "let try new base: Sana sprint"), no training
+- Licence of the cached snapshot (Sana_Sprint_0.6B_1024px_diffusers @aa76e7f): **Apache-2.0** (LICENSE file); README adds the
+  Gemma terms for the Gemma-2-2B text encoder. We would replace Gemma with learned option tokens; if those are initialised from
+  Gemma outputs, legal should say whether Gemma terms apply (alternative init avoids it).
+- `scripts/sana_b0.py` -> results/sana_b0.json (fp16, batch 1, 512 px, dev-duyhv-2 GPU 0):
+  | part | params | GFLOPs | H200 ms |
+  |---|---|---|---|
+  | Sana transformer, one image (16x16 tokens) | 593.5M | 315.6 | – |
+  | **Sana transformer, diptych [noise / photo] (16x32)** | 593.5M | **584.2** | 21.0 |
+  | DC-AE f32c32 encoder 512 | 153.0M | **1,294.9** | 14.4 |
+  | **DC-AE decoder 512** | 159.2M | **2,092.2** | 18.3 |
+  | DreamLite UNet diptych (current) | 390.0M | 682.7 | 24.9 |
+  | TinyVAE encoder / decoder (current) | 1.2M / 1.2M | 122.3 / 141.4 | – / 2.1 |
+- Autoencoder fidelity at 512 on 64 kept klein cartoon3d targets (encode -> decode): **DC-AE PSNR 37.6, LPIPS 0.006, sharpness
+  ratio 1.03**; TinyVAE original 33.6 / 0.016 / 0.92; TinyVAE enc + decg2 30.7 / 0.027 / 0.88 (decg2 is tuned for student
+  latents, not clean ones).
+- Reading: the transformer is 15% cheaper than our UNet but 52% bigger (8-bit ~600 MB vs 412 MB). **The DC-AE encoder/decoder
+  are not phone-feasible** (3.4 TFLOPs together, 5x the transformer). A Sana phone path needs a tiny encoder + tiny decoder for
+  the 32-channel f32 latent (TinyVAE-style, distilled), as B1. Half-drop does not apply (full attention mixes photo and output
+  tokens in every block). Core ML conversion test of the transformer started (`scripts/sana_coreml_test.py`, local CPU).
+- **Core ML conversion of the Sana transformer: OK** (results/sana_coreml_test.json): torch.export + coremltools 9.0, mlprogram,
+  fp16, iOS16, diptych latent [1,32,16,32] + context [1,300,2304]; 5,603 ops (linear attention converts: relu kernels, matmul,
+  reduce_mean); fp16 package 1,132.7 MB (8-bit ~570 MB, not built). 1.2 min on CPU. Numerics not checkable on Linux.
+- **B0 verdict:** transformer feasible (Apache-2.0, converts, 584 GFLOPs); DC-AE encoder + decoder are not (3.4 TFLOPs).
+  Next step if continued, B1: distil a tiny encoder + tiny decoder for the 32-channel f32 latent; gate = fidelity at least
+  TinyVAE level (PSNR ~33.6, LPIPS ~0.016 on the same 64 targets) at roughly TinyVAE cost.
+- Deleted the Sana Core ML conversion test package weights/sana_b0 (1.2 GB; results kept; logs/deleted_2026-11-20_sana_b0.txt).
+- Deleted dropped-experiment artifacts (dl7 + views, an_tok, an_all weights; decC/decW/decD; their generated outputs; ~6.4 GB), user-approved; kept configs/train logs/results; list in logs/deleted_2026-11-20_dropped_prod.txt.
+
+### 2026-11-20 ~13:45 UTC — Plan B1: tiny encoder / decoder for Sana-Sprint's DC-AE latent (user: "training sana sprint with decoder tiny")
+- `scripts/train_tiny_dcae.py`: AutoencoderTiny-family, 64 ch, latent 32 ch, 6 stages (512 <-> 16), latent space = DC-AE latent x
+  0.41407 (what the Sana transformer reads/writes). 1.98M params each; **decoder 143 GFLOPs, encoder 123 GFLOPs at 512** (DreamLite
+  TinyVAE 141 / 122). 31 high-resolution layers warm-started from DreamLite's TinyVAE.
+  - tdec1 (dev-duyhv-2 GPU 0): tiny_dec(DC-AE enc(x)) -> x, L1 + LPIPS512 + DINOv2 critic 0.1 from step 1000; 75% klein targets
+    (cartoon3d/comic_line/chibi, 129k) + 25% photos (48.8k).
+  - tenc1 (GPU 1): tiny_enc(x) -> DC-AE latent (MSE), 75% photos.
+  - 12000 steps, lr 2e-4, bs 16 — NOT curve-based (first run of its kind): 12k = decg2's 10k + margin for the new layers; checkpoints
+    + hold-out evals every 2000 steps decide whether to extend. Hold-out = the 64 targets of sana_b0.py (never trained on).
+  - Gate: PSNR >= ~33.6, LPIPS <= ~0.016 on the hold-out (= DreamLite TinyVAE level); DC-AE itself 37.6 / 0.006.
+  - Speed: dec 0.37 s/step, enc 0.24 s/step -> ~1.5 h / ~0.8 h.
+- Deleted release/2026-11-17_device_test and the unused base models sd-turbo, SD 1.5, IP-Adapter, instruct-pix2pix, LCM-LoRA (+ their 13 cache blobs, not shared with kept models), user-approved; list in logs/deleted_2026-11-20_basemodels_devicetest.txt.
+- **~14:05 UTC (user: "stop dev-duyhv-2, only use 2 gpu h200"):** killed tdec1 / tenc1 on dev-duyhv-2 (stopped at step ~1900 /
+  ~3200; tenc1 at step 2000: dcdec(tinyenc) PSNR 25.6, LPIPS 0.063, latent MSE 0.106), `dstack stop dev-duyhv-2`. Restarted the
+  same recipe from scratch on dev-duyhv as tdec1r (GPU 0) / tenc1r (GPU 1), `scripts/b1_tiny_duyhv.sh`. Partial tdec1/tenc1
+  checkpoints (step_02000) and logs kept.
+- **Infra ~14:10 UTC:** the relaunch on dev-duyhv never started: from ~14:05 UTC SSH from the work server to h200-gpu-fleet fails
+  (`qualgo@10.10.0.123: Permission denied (publickey)`; `dstack attach` -> "Can't connect to the remote host"). User: "stop dev-duyhv,
+  resubmit dev-duyhv-2 and retrain sana sprint" -> `dstack stop dev-duyhv`, `dstack apply -f dstack/dev_env_2.yaml` (running,
+  2x H200NVL), but attach/SSH still fail, so nothing can be launched from here. Fallback prepared, not applied:
+  `dstack/task_b1_tiny.yaml` (B1 as a dstack task, no client SSH needed; same image/volume; 2x H200NVL).
+- **~16:30 UTC (user: "yeah do it"):** `dstack stop dev-duyhv-2`, then `dstack apply -f dstack/task_b1_tiny.yaml` -> run
+  **b1-tiny-dcae** (dstack task, 2x H200NVL, h200-gpu-fleet; no client SSH needed) running `scripts/b1_tiny_duyhv.sh`:
+  tdec1r (GPU 0) + tenc1r (GPU 1), same recipe as tdec1/tenc1. Started training (dec 0.37 s/step, enc 0.24 s/step). No dev
+  environments running now; SSH to the fleet still broken (needs a fleet admin).
+
+### 2026-11-20 ~17:00 UTC — Plan B2 + B3 queued (user: "queue b3, not to ask me again")
+- Sana-Sprint one-step math (diffusers SanaSprintPipeline + SCMScheduler, trigflow, sigma_data 0.5, t = pi/2): x0 = eps - F(eps),
+  scm_timestep 1, guidance 4.5 x 0.1 -> the student uses x0 = eps - F([eps | photo]) with a fixed noise (seed 1234), same form
+  as the DreamLite student. `scripts/sana_common.py`.
+- B2 `scripts/sana_encode.py`: full DC-AE latents (x 0.41407) of cartoon3d manifest_v2 photo + target, plain + proper flip,
+  same rows as train_dl -> data/pairs/cartoon3d/sana_lat_manifest_v2.pt (~3.5 GB).
+- B3 `scripts/train_sana.py`, two variants in parallel (one per GPU):
+  - **sD1** = diptych [noise | photo] (16x32 tokens, 584 GFLOPs);
+  - **sC1** = channel concat (patch embed 32 -> 64 inputs, new weights zero; 16x16 tokens, ~316 GFLOPs on the phone).
+  - Option tokens [22, 300, 2304] initialised from Gemma-2-2B encodings of each option's prompt via Sana's encode_prompt
+    (legal note on Gemma terms stands).
+  - Losses: mse + LPIPS256 + lp512 + DINOv2 critic 0.2 from step 500, decoded with the tiny decoder tdec1r.
+  - 15000 steps, lr 5e-5, token lr 1e-3, bs 16: NOT curve-based (first Sana student; dl1 used 16k from an editing model);
+    fp16 checkpoints + val sheets every 2500.
+- Eval `scripts/sana_eval.py`: the same faces/metrics as eval_e1.py, imported from it. Each student is run with the tiny encoder
+  (phone path) and with the full DC-AE encoder; dl6g2 is evaluated by eval_e1.py in the same task.
+- Smoke test (local H100 GPU 2, 6 pairs per option, 30 steps, both variants + eval): all stages run; smoke files deleted.
+  Fixed on the way: a sample-sheet decode outside autocast; checkpoints now save an fp16 copy (master weights untouched).
+- Queue: `scripts/queue_b23.sh` (work server, nohup) submits `dstack/task_b23_sana.yaml` (b23-sana, 2x H200NVL) once dstack task
+  b1-tiny-dcae is no longer running -> never more than 2 GPUs. `scripts/b23_sana.sh` runs B2 -> B3 -> evals inside the task.
+
+### 2026-11-20 ~22:00 UTC — B1 / B2 / B3 results (run as dstack tasks b1-tiny-dcae, b23-sana; both exited 0)
+- **B1 crashed at the end of the first data epoch (my bug: the data iterator was not restarted)**: tiny decoder tdec1r at step
+  ~10,755 (129k targets / 12 per batch), tiny encoder tenc1r at ~4,070 (48.8k photos / 12). No `final`; B3 used the last
+  checkpoints: tdec1r/step_10000, tenc1r/step_04000. Fixed in train_tiny_dcae.py (epoch wrap), not rerun.
+  Hold-out (64 cartoon3d targets): tiny decoder PSNR 21.2 -> 22.7 -> 23.9 -> 24.7 -> **25.1** / LPIPS 0.070 at step 2k..10k
+  (gate ~33.6 / ~0.016; DC-AE 37.6 / 0.006) -> **gate NOT met**, curve flattening. Tiny encoder (through the DC-AE decoder):
+  PSNR 28.7 / LPIPS 0.034 at step 4k, still improving when it stopped.
+- B2: DC-AE latents of 53,930 pairs (2 parts x ~21 min) -> data/pairs/cartoon3d/sana_lat_manifest_v2.pt (3.3 GB).
+- B3: sD1 (diptych) 15000 steps 122.6 min, final val LPIPS 0.193; sC1 (channel concat) 98.4 min, val LPIPS 0.195.
+- Eval (same code/faces as eval_e1; decoder = tiny tdec1r/step_10000 for Sana; 95% bootstrap CI over faces):
+  | model | expr all | face-only | outside | avatar likeness (SFace, v2 400) |
+  |---|---|---|---|---|
+  | dl6g2 + decg2 (production) | 0.590 [0.552, 0.623] | 0.734 | 0.493 [0.441, 0.538] | **0.248** |
+  | sD1, tiny encoder (phone) | 0.560 [0.515, 0.606] | 0.740 | 0.441 | 0.142 |
+  | sD1, DC-AE encoder | 0.569 | 0.724 | 0.465 | 0.146 |
+  | **sC1, tiny encoder (phone)** | 0.565 [0.515, 0.610] | 0.714 | 0.465 | 0.146 |
+  | sC1, DC-AE encoder | 0.554 | 0.703 | 0.455 | 0.151 |
+  Expressions: within the CIs of dl6g2 (slightly lower). Likeness: -40% vs dl6g2. Visual (grids/sana/sC1_tiny_expr.jpg): clean
+  cartoon3d stickers, every expression/gesture/accessory drawn, but faces more generic/younger. Channel concat (sC1, ~2x cheaper)
+  = diptych (sD1). Not separated yet: how much of the likeness gap is the weak tiny decoder vs the Sana student itself.
+- 2026-11-21: deleted old checkpoints (sD1/sC1 step_02500..15000, tdec1r steps 2k-8k, tenc1r step 2k, aborted tdec1/tenc1 step 2k); kept finals + the used tiny checkpoints; list in logs/deleted_2026-11-21_sana_ckpts.txt.
+
+### 2026-11-21 — Sana step 1: tiny decoder vs student share of the likeness gap (user: "run step 1"), local H100 GPU 2
+`scripts/sana_eval.py --dec dcae` (new option: Sana's full DC-AE decoder; everything else = eval_e1 faces/metrics):
+| model / path | expr all | face-only | outside | avatar likeness |
+|---|---|---|---|---|
+| dl6g2 + decg2 (production) | 0.590 | 0.734 | 0.493 | **0.248** |
+| sC1 tiny enc + tiny dec (phone) | 0.565 | 0.714 | 0.465 | 0.146 |
+| sC1 tiny enc + full dec | 0.575 | 0.641 | 0.531 | 0.188 |
+| sC1 full enc + full dec (server) | 0.579 | 0.651 | 0.531 | **0.195** |
+| sD1 tiny enc + tiny dec (phone) | 0.560 | 0.740 | 0.441 | 0.142 |
+| sD1 tiny enc + full dec | 0.558 | 0.651 | 0.497 | 0.179 |
+| sD1 full enc + full dec (server) | 0.565 | 0.651 | 0.507 | 0.187 |
+- Likeness gap to dl6g2 (sC1): 0.248 -> 0.146 = -0.102; the tiny decoder accounts for ~0.042 (0.146 -> 0.188), the tiny
+  encoder ~0.008, and **the Sana student itself ~0.053** (0.195 even with Sana's full autoencoder). Both parts matter.
+- Expression: with the full decoder, outside-face edits rise (0.531 vs dl6g2 0.493) and face-only falls (0.651 vs 0.734); the
+  tiny decoder flips this (face 0.714, outside 0.465). Single seed, 24 faces; CIs ~+-0.05.
+- sC1 (channel concat, ~2x cheaper) >= sD1 (diptych) in every path.
+
+### 2026-11-21 — dl8: ONE model + ONE decoder for all styles (user: "start it")
+Why dl7 lost to the packs: independent tokens per style (66), raw klein targets only, cartoon-only decoder, no per-style capacity,
+copied 18k steps. dl8 changes (code: train_dl.py --style-tokens / --style-film / --distill-w / --distill-latents;
+dl_arch.install_style_film / install_decoder_film, auto-installed from style_film.pt / style_film_dec.pt + film_style.json;
+scripts/train_decoder_ms.py):
+1. Factorised context: 32 learned style tokens + the 22 option tokens shared by all styles (450 tokens per option).
+2. Per-style FiLM after the 30 GroupNorms of mid/up blocks (184k params = ~61k per style, ~120 KB fp16).
+3. Distillation: extra latent MSE (w 1.0) to the specialists' output for the same photo: dl6g2 (cartoon3d), pk_comic (comic_line),
+   pk_chibi (chibi). Caches weights/decoder/_zs_{dl6g2,pk_comic,pk_chibi}_manifest_v2.pt (dl6g2 / pk_chibi built 2026-11-21 on
+   local H100 GPU 2).
+4. One decoder dec8 = decg2 + per-style FiLM after each decoder block, trained on dl8's own latents of all 3 styles (balanced).
+- Recipe: from dl6g2, style-balanced sampling, dl6g2 losses (lp512, eye, critic 0.2), lr 2e-5, **14000 steps: from dl7's val
+  curve** (LPIPS 0.2069 @13k, 0.2052 @18k). dec8 6000 steps (decCm's 5000 + margin; unverified). dl8n = dl8 without FiLM (ablation).
+- Smoke test (local GPU 2, 20 steps + decoder on 64 pairs/style): all stages run; views load with the right fixed style.
+- Running as dstack task **b8-onemodel** (2x H200NVL, scripts/b8_onemodel.sh): dl8 (GPU 0) + dl8n (GPU 1) -> dec8 + evals of
+  dl8/dl8n with the specialists' decoders -> evals of dl8 + dec8 (expr_eval, v2 quality, sharp_ratio per style).
+- Pass bar vs specialists: expression/likeness within noise; sharpness cartoon >= 0.64, chibi >= 0.60, comic >= 0.83.
+- **~04:35 UTC (user: "use both gpu to accelerate training"):** stopped b8-onemodel during setup (no step taken), patched
+  train_dl.py DDP to all-reduce every token tensor (style + shared option tokens, not only `emb`), resubmitted as
+  `scripts/b8_ddp.sh` / `dstack/task_b8_ddp.yaml` (task name still b8-onemodel): **dl8 on both GPUs with torchrun**, global batch 16
+  (8 per GPU) = same optimisation as planned; 0.47 s/step (vs ~0.77 on one GPU). dl8n ablation dropped for now. Then dec8 (GPU 0)
+  || dl8 evals with the specialists' decoders (GPU 1), then dl8 + dec8 evals.
+
+### 2026-11-21 ~07:30 UTC — dl8 + dec8 results (task b8-onemodel, DDP; dl8 94.5 min, dec8 27.2 min)
+dl8 final val MSE / LPIPS 0.514 / 0.203 (dl7 final 0.528 / 0.205). expr_eval (all / face-only / outside), sticker id top-5,
+likeness id_cos v2 avatar / sticker, sharpness vs teacher (sharp_ratio.py):
+| style | model | expr all / face / outside | id top-5 | avatar / sticker likeness | sharpness |
+|---|---|---|---|---|---|
+| cartoon3d | dl6g2 + decg2 (specialist) | 0.583 / 0.729 / 0.486 | 0.346 | .248 / .221 | 0.64 |
+| cartoon3d | dl8 + decg2 | 0.579 / 0.734 / 0.476 | 0.352 | .240 / .208 | 0.56 |
+| cartoon3d | **dl8 + dec8 (one model, one decoder)** | 0.579 / 0.734 / 0.476 | 0.348 | .241 / .214 | **0.65** |
+| comic | pk_comic + decCm (specialist) | 0.546 / 0.609 / 0.503 | 0.706 | .478 / .390 | 0.83 |
+| comic | dl8 + decCm | 0.502 / 0.599 / 0.438 | 0.656 | .471 / .387 | 0.80 |
+| comic | **dl8 + dec8** | 0.515 / 0.646 / **0.427** | 0.679 | .492 / .398 | **0.74** |
+| chibi | pk_chibi + decg2 (specialist) | 0.581 / 0.719 / 0.490 | 0.192 | .192 / .164 | 0.60 |
+| chibi | dl8 + decg2 | 0.583 / 0.739 / 0.479 | 0.192 | .191 / .171 | 0.54 |
+| chibi | **dl8 + dec8** | 0.590 / 0.729 / 0.496 | 0.202 | .188 / .172 | **0.74** |
+- **cartoon3d: pass** (within noise of dl6g2 on every metric; sharpness 0.65 vs 0.64). **chibi: pass, better than the pack**
+  (expressions +0.01, id top-5 +0.01, sharpness 0.74 vs 0.60). **comic: fails** the outside-face bar (0.427 vs 0.503, -0.08, the
+  same gap as dl7) and sharpness (0.74 vs 0.83, still far above the cartoon decoder's 0.54). The comic gesture loss is in the
+  UNet (dl8 + decCm: outside 0.438), not the decoder. Single seed, 24 faces (CI ~+-0.05).
+
+### 2026-11-21 ~07:50-08:25 UTC — dl9 (dl8 + comic emphasis, user "do 1") blocked by the fleet host
+- Code ready (train_dl.py: --style-weights, --distill-style-w, resume of dl8's factorised tokens + FiLM; dl_arch.remove_style_film,
+  load_unet(style_film=False)); `scripts/b9_comic.sh` / `b9_comic_1gpu.sh`, dstack/task_b9_comic*.yaml. Recipe: from dl8, comic
+  sampled 2x, comic distillation x3, lr 1e-5, 4000 steps (not curve-based).
+- Attempt 1 (2-GPU DDP): rank 0 failed in DDP init ("DDP expects same model across all ranks ... rank 0 has inconsistent 0
+  params"); rank 1 hung -> task stopped. Changed the resume to install trainable FiLM directly (as dl8 did).
+- Attempt 2 (2-GPU DDP + single-GPU fallback): no output for 20 min after torchrun start (hang before the first log line) -> stopped.
+- Attempts 3-5 (single-GPU script, 2- and 1-GPU tasks): dstack **"executor error"** within 20 s, no log. The fleet host
+  (h200-gpu-fleet, 10.10.0.123) is likely holding stale containers/processes from the stopped runs; SSH to it has also been
+  broken since 2026-11-20 ~14:05 UTC. Needs a fleet admin. Nothing running on the H200s now.
+- dl8 + dec8 remain the current best one-model result (cartoon3d pass, chibi pass/better, comic fails outside-face).
+- **~09:55 UTC root cause (read-only check over SSH with dstack's key, `qualgo@10.10.0.123`, host gpu-h200-123):** load average
+  ~2,200; 2,230 `nvidia-smi` processes + 2 python processes in uninterruptible sleep (D) for ~2 h; `nvidia-smi` does not answer.
+  The 2 python processes are another team's vLLM eval (`/mnt/project/kchat/thaitt/llm-merge/...`, `bl_eval.py`,
+  `bl_joint_deltas.py`), started ~07:48 / ~07:53 UTC, not ours. The NVIDIA driver on that host is hung, so every new run fails
+  (our 2-GPU dl9 hang + "executor error"). Needs a fleet admin (GPU reset / host reboot). Nothing of ours is running there.
+- **12:43 UTC:** resubmitting b9-comic on h200-gpu-fleet -> "executor error" again (host still hung, no SSH answer; h200-120-fleet
+  8/8 busy). User: "check again or submit new job" -> **dl9 runs on the LOCAL H100s** (`scripts/b9_comic_local.sh`, copy of
+  b9_comic.sh remapped to GPUs 1/2, both free; GPU 0/3 in use by others). 2-GPU torchrun: rank 1 killed by the host OOM killer
+  (each rank loads ~45-60 GB of caches; this server has 251 GB RAM, ~80 GB used by others) -> the script's single-GPU fallback
+  (GPU 1) runs: 1.0 s/step, 4000 steps (~67 min), then evals on GPUs 1 + 2. Logs: logs/b9/train_dl9_1gpu.log, b9_local.out.
+- 13:53 UTC (user: 'submit dev-duyhv again'): dstack apply dstack/dev_env.yaml -> executor error in 18 s (h200-120-fleet 8/8 busy; h200-gpu-fleet host still hung, SSH command times out). dl9 continues on the local H100.
+
+### 2026-11-21 ~14:30 UTC — two-stage idea, step 1: stickers from the avatar instead of the photo (user: "yes run step 1 on GPU 2")
+`scripts/avatar2sticker_test.py` (local H100 GPU 2, 12 min, no training): dl6g2 + decg2 cartoon3d, 24 synthetic expr faces;
+A = photo -> 20 stickers (today), B = photo -> avatar -> 20 stickers (avatar image re-encoded). eval_e1 metric code.
+| | expr all / face / outside | sticker likeness to photo (SFace) | set consistency (pairwise SFace, 20 stickers) | sticker ~ avatar |
+|---|---|---|---|---|
+| A. from photo | 0.588 / 0.734 / 0.490 | **0.167** | 0.696 | 0.649 |
+| B. from avatar | 0.606 / 0.766 / 0.500 | 0.100 (-40%) | 0.699 | 0.627 |
+Avatar likeness to photo 0.262. Expressions: B within noise (CI all [0.571, 0.642] vs [0.548, 0.623]). Consistency: no gain (today's
+sets are already as consistent by face-ID). Likeness: -40%: re-encoding the cartoon makes the model stylise it a second time
+(smoother, younger faces, fewer wrinkles; grids/avatar2sticker_test.jpg). Verdict without training: no benefit; a fine-tune on
+avatar inputs (step 2) could recover likeness, but the expected main win (consistency) is not there by this measure.
+
+### 2026-11-21 ~15:40 UTC — dl9 results (dl8 + comic emphasis; local H100 GPU 1, 72.8 min; evals on GPUs 1 + 2)
+Val MSE / LPIPS 0.509 / 0.2036 (dl8 0.514 / 0.2030). expr_eval all / face-only / outside, id top-5, likeness avatar / sticker, sharpness:
+| style | model | expr | id top-5 | likeness | sharp |
+|---|---|---|---|---|---|
+| comic | pk_comic + decCm (specialist) | 0.546 / 0.609 / 0.503 | 0.706 | .478 / .390 | 0.83 |
+| comic | dl8 + dec8 | 0.515 / 0.646 / 0.427 | 0.679 | .492 / .398 | 0.74 |
+| comic | **dl9 + dec8** | **0.535 / 0.635 / 0.469** | 0.688 | .492 / .400 | 0.70 |
+| comic | dl9 + decCm | 0.513 / 0.594 / 0.458 | 0.671 | .472 / .385 | 0.78 |
+| cartoon3d | dl6g2 + decg2 (specialist) | 0.583 / 0.729 / 0.486 | 0.346 | .248 / .221 | 0.64 |
+| cartoon3d | dl8 + dec8 | 0.579 / 0.734 / 0.476 | 0.348 | .241 / .214 | 0.65 |
+| cartoon3d | **dl9 + dec8** | 0.573 / 0.755 / 0.451 | 0.335 | .241 / .215 | 0.62 |
+| chibi | pk_chibi + decg2 (specialist) | 0.581 / 0.719 / 0.490 | 0.192 | .192 / .164 | 0.60 |
+| chibi | dl8 + dec8 | 0.590 / 0.729 / 0.496 | 0.202 | .188 / .172 | 0.74 |
+| chibi | **dl9 + dec8** | **0.604 / 0.729 / 0.521** | 0.200 | .189 / .169 | 0.74 |
+- **First one-model version within noise of every specialist on expressions** (comic outside -0.034, was -0.076; cartoon3d -0.035;
+  chibi +0.031). Likeness at specialist level in all styles. Comic per edit vs the pack: wave .625 (.75), ok .50 (.54), facepalm
+  .42 (.38), thumbs .75 (.63); **love 0.00 (pack 0.42)** = hearts too small/faint; sleepy/night 0.00 for the pack too.
+- Open: comic sharpness 0.70 (dec8 was trained on dl8 latents; decCm gives 0.78 on dl9); cartoon3d outside dipped vs dl8 (0.451 vs
+  0.476, the price of the comic emphasis). Sheet: grids/dl9_dec8_3styles.jpg.

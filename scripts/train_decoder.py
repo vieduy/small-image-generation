@@ -59,9 +59,14 @@ def chmod_tree(p):  # cross-node readability (dev-duyhv vs dev-duyhv-2, root-squ
 def build_student_latents(student, c, FL, out):
     w = ROOT / "weights/student" / student
     cfg = json.loads((w / "config.json").read_text())
-    assert cfg.get("arch") == "dreamlite" and cfg.get("lora_rank", 0) == 0, "DreamLite full-UNet students only"
+    assert cfg.get("arch") == "dreamlite", "DreamLite students only"
     dt = torch.float16  # = student_infer.py (phone path is fp16)
-    unet = DLA.load_unet(w / "unet").to(DEV, dt).eval()
+    if cfg.get("lora_rank", 0) > 0:  # style pack (2026-11-20, comic decoder): base UNet + LoRA, merged (= student_infer.py)
+        from peft import PeftModel
+        base = DLA.load_unet(ROOT / "weights/student" / cfg["init_from"] / "unet")
+        unet = PeftModel.from_pretrained(base, w / "unet_lora").merge_and_unload().to(DEV, dt).eval()
+    else:
+        unet = DLA.load_unet(w / "unet").to(DEV, dt).eval()
     te = torch.load(w / "task_emb.pt")
     emb, mask = te["emb"].to(DEV, dt), te["mask"].to(DEV)
     MS = cfg.get("ms_sigmas")

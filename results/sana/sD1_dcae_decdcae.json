@@ -1,0 +1,57 @@
+{
+ "tag": "sD1",
+ "ckpt": "final",
+ "cond": "diptych",
+ "encoder": "dcae",
+ "decoder": "dcae",
+ "tiny_dec": null,
+ "tiny_enc": null,
+ "expr_acc": {
+  "all": 0.5646,
+  "face_only": 0.651,
+  "outside": 0.5069
+ },
+ "expr_acc_ci95": {
+  "all": [
+   0.529,
+   0.598
+  ],
+  "face_only": [
+   0.604,
+   0.698
+  ],
+  "outside": [
+   0.458,
+   0.556
+  ]
+ },
+ "per_edit": {
+  "happy": 0.5,
+  "lol": 0.7083,
+  "love": 0.7083,
+  "cry": 1.0,
+  "angry": 0.75,
+  "wow": 0.9583,
+  "think": 0.7917,
+  "sleepy": 0.0833,
+  "thumbs": 0.375,
+  "wave": 0.75,
+  "ok": 0.0833,
+  "facepalm": 0.375,
+  "shrug": 0.9583,
+  "party": 0.625,
+  "cool": 1.0,
+  "shy": 0.9167,
+  "wink": 0.0,
+  "sad": 0.125,
+  "thanks": 0.5417,
+  "night": 0.0417
+ },
+ "avatar_likeness": {
+  "id_cos_mean": 0.1865,
+  "n": 400,
+  "of": 400
+ },
+ "metric_code": "scripts/eval_e1.py (FACE_ONLY/OUTSIDE, faces, CLIP prompt, SFace)",
+ "minutes": 7.7
+}

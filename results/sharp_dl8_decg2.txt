@@ -1,0 +1,2 @@
+tag                      thanks    shrug    party       ok     wave facepalm   thumbs    happy     wink     cool     mean
+dl8_decg2                  0.54     0.59     0.50     0.53     0.49     0.52     0.51     0.68     0.59     0.64     0.56

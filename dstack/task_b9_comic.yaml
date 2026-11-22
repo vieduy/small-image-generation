@@ -1,0 +1,14 @@
+type: task
+name: b9-comic
+# dl9 = dl8 + comic emphasis (2026-11-21, user "do 1").
+# Both GPUs (DDP).
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+fleets:
+  - h200-gpu-fleet
+commands:
+  - bash /mnt/project/kchat/duyhv/i2i-sticker-avatar/scripts/b9_comic.sh
+resources:
+  gpu: H200NVL:2
+  shm_size: 64GB

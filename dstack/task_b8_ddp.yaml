@@ -1,0 +1,14 @@
+type: task
+name: b8-onemodel
+# dl8 one-model multi-style + one decoder (2026-11-21, user "start it").
+# DDP version (user: "use both gpu to accelerate training").
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+fleets:
+  - h200-gpu-fleet
+commands:
+  - bash /mnt/project/kchat/duyhv/i2i-sticker-avatar/scripts/b8_ddp.sh
+resources:
+  gpu: H200NVL:2
+  shm_size: 64GB

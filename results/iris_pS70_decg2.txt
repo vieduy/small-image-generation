@@ -1,0 +1,7 @@
+[ WARN:0@2.401] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@2.439] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+{'tag': 'klein_personal', 'n_images': 300, 'n_scored': 300, 'iris_chroma': 7.76, 'a': 5.12, 'b': 5.19, 'ts': '2026-11-20T04:46:20'}
+{'tag': 'klein_personal', 'n_images': 300, 'n_scored': 300, 'iris_chroma': 7.76, 'a': 5.12, 'b': 5.19, 'ts': '2026-11-20T04:46:25'}
+{'tag': 'student_dl6g2', 'n_images': 300, 'n_scored': 300, 'iris_chroma': 5.96, 'a': 4.17, 'b': 3.29, 'ts': '2026-11-20T04:46:29'}
+{'tag': 'student_dl6g2_decg2', 'n_images': 300, 'n_scored': 300, 'iris_chroma': 6.16, 'a': 3.47, 'b': 4.4, 'ts': '2026-11-20T04:46:34'}
+{'tag': 'student_pS70_decg2', 'n_images': 300, 'n_scored': 300, 'iris_chroma': 5.72, 'a': 3.34, 'b': 3.97, 'ts': '2026-11-20T04:46:39'}

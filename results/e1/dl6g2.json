@@ -1,0 +1,143 @@
+{
+ "run": "dl6g2",
+ "weights": "weights/student/dl6g2",
+ "decoder": "decg2",
+ "eval_code_sha1": "a317a5ad2d",
+ "git": "?",
+ "config": {
+  "init_from": "dl3F",
+  "steps": 3000,
+  "lr": 1e-05,
+  "emb_lr": 0.001,
+  "bs": 16,
+  "seed": 0,
+  "manifest": "manifest_v2.jsonl",
+  "shared_trunk": null,
+  "shared_scope": null,
+  "gan_w": 0.2,
+  "lp512_w": 1.0,
+  "eye_w": 1.0,
+  "eye_lpips_w": 0.25,
+  "proper_flip": true,
+  "tgt_cache": true
+ },
+ "option_modules": [
+  "down_blocks.0.attentions.0.transformer_blocks.0.attn2",
+  "down_blocks.0.attentions.1.transformer_blocks.0.attn2",
+  "down_blocks.1.attentions.0.transformer_blocks.0.attn2",
+  "down_blocks.1.attentions.0.transformer_blocks.1.attn2",
+  "down_blocks.1.attentions.1.transformer_blocks.0.attn2",
+  "down_blocks.1.attentions.1.transformer_blocks.1.attn2",
+  "down_blocks.2.attentions.0.transformer_blocks.0.attn2",
+  "down_blocks.2.attentions.0.transformer_blocks.1.attn2",
+  "down_blocks.2.attentions.0.transformer_blocks.2.attn2",
+  "down_blocks.2.attentions.0.transformer_blocks.3.attn2",
+  "down_blocks.2.attentions.1.transformer_blocks.0.attn2",
+  "down_blocks.2.attentions.1.transformer_blocks.1.attn2",
+  "down_blocks.2.attentions.1.transformer_blocks.2.attn2",
+  "down_blocks.2.attentions.1.transformer_blocks.3.attn2",
+  "mid_block.attentions.0.transformer_blocks.0.attn2",
+  "mid_block.attentions.0.transformer_blocks.1.attn2",
+  "mid_block.attentions.0.transformer_blocks.2.attn2",
+  "mid_block.attentions.0.transformer_blocks.3.attn2",
+  "up_blocks.0.attentions.0.transformer_blocks.0.attn2",
+  "up_blocks.0.attentions.0.transformer_blocks.1.attn2",
+  "up_blocks.0.attentions.0.transformer_blocks.2.attn2",
+  "up_blocks.0.attentions.0.transformer_blocks.3.attn2",
+  "up_blocks.0.attentions.1.transformer_blocks.0.attn2",
+  "up_blocks.0.attentions.1.transformer_blocks.1.attn2",
+  "up_blocks.0.attentions.1.transformer_blocks.2.attn2",
+  "up_blocks.0.attentions.1.transformer_blocks.3.attn2",
+  "up_blocks.0.attentions.2.transformer_blocks.0.attn2",
+  "up_blocks.0.attentions.2.transformer_blocks.1.attn2",
+  "up_blocks.0.attentions.2.transformer_blocks.2.attn2",
+  "up_blocks.0.attentions.2.transformer_blocks.3.attn2",
+  "up_blocks.1.attentions.0.transformer_blocks.0.attn2",
+  "up_blocks.1.attentions.0.transformer_blocks.1.attn2",
+  "up_blocks.1.attentions.1.transformer_blocks.0.attn2",
+  "up_blocks.1.attentions.1.transformer_blocks.1.attn2",
+  "up_blocks.1.attentions.2.transformer_blocks.0.attn2",
+  "up_blocks.1.attentions.2.transformer_blocks.1.attn2"
+ ],
+ "n_option_inputs": 36,
+ "self_attn_after_entry": 24,
+ "entry": "down_blocks.0.attentions.0.transformer_blocks.0.attn2",
+ "expr_acc": {
+  "all": 0.5896,
+  "face_only": 0.7344,
+  "outside": 0.4931
+ },
+ "expr_acc_ci95": {
+  "all": [
+   0.552,
+   0.623
+  ],
+  "face_only": [
+   0.677,
+   0.792
+  ],
+  "outside": [
+   0.441,
+   0.538
+  ]
+ },
+ "per_edit": {
+  "happy": 0.7917,
+  "lol": 0.75,
+  "love": 0.375,
+  "cry": 1.0,
+  "angry": 0.7083,
+  "wow": 1.0,
+  "think": 0.9167,
+  "sleepy": 0.0833,
+  "thumbs": 0.5,
+  "wave": 0.8333,
+  "ok": 0.0833,
+  "facepalm": 0.75,
+  "shrug": 0.8333,
+  "party": 0.8333,
+  "cool": 1.0,
+  "shy": 0.75,
+  "wink": 0.1667,
+  "sad": 0.4167,
+  "thanks": 0.0,
+  "night": 0.0
+ },
+ "avatar_likeness": {
+  "id_cos_mean": 0.248,
+  "n": 400,
+  "of": 400,
+  "set": "v2 synthetic: data/faces[:100] + data/faces_eval2[:300]"
+ },
+ "n_faces_expr": 24,
+ "split": {
+  "face_only": [
+   "happy",
+   "lol",
+   "cry",
+   "wow",
+   "sad",
+   "shy",
+   "wink",
+   "cool"
+  ],
+  "outside": [
+   "love",
+   "angry",
+   "think",
+   "sleepy",
+   "thumbs",
+   "wave",
+   "ok",
+   "facepalm",
+   "shrug",
+   "thanks",
+   "party",
+   "night"
+  ]
+ },
+ "chance": 0.05,
+ "outputs": "outputs/e1/dl6g2",
+ "grid": "grids/e1/dl6g2_expr.jpg",
+ "minutes": 1.3
+}

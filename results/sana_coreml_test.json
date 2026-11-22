@@ -1,0 +1,72 @@
+{
+ "coremltools": "9.0",
+ "torch": "2.11.0+cu128",
+ "torch_export": "ok",
+ "coreml_convert": "ok",
+ "package": "weights/sana_b0/SanaSprint06_diptych_fp16.mlpackage",
+ "size_MB": 1132.7,
+ "op_histogram_top": [
+  [
+   "const",
+   3101
+  ],
+  [
+   "mul",
+   395
+  ],
+  [
+   "add",
+   369
+  ],
+  [
+   "transpose",
+   313
+  ],
+  [
+   "reshape",
+   288
+  ],
+  [
+   "linear",
+   230
+  ],
+  [
+   "pow",
+   113
+  ],
+  [
+   "reduce_mean",
+   113
+  ],
+  [
+   "rsqrt",
+   113
+  ],
+  [
+   "matmul",
+   112
+  ],
+  [
+   "conv",
+   85
+  ],
+  [
+   "silu",
+   59
+  ],
+  [
+   "split",
+   57
+  ],
+  [
+   "layer_norm",
+   57
+  ],
+  [
+   "relu",
+   56
+  ]
+ ],
+ "n_ops": 5603,
+ "minutes": 1.2
+}

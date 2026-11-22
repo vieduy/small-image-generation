@@ -1,0 +1,53 @@
+{
+ "snapshot": "aa76e7f4f4928f378716b6716a2130fba3caf5b1",
+ "licence": "Apache-2.0 (LICENSE in snapshot); README adds Gemma terms for the text encoder",
+ "sana": {
+  "transformer_params_M": 593.5,
+  "dcae_encoder_params_M": 153.0,
+  "dcae_decoder_params_M": 159.2,
+  "gflops": {
+   "transformer_single_16x16": 315.6,
+   "transformer_diptych_16x32": 584.2,
+   "dcae_encode_512": 1294.9,
+   "dcae_decode_512": 2092.2
+  },
+  "h200_ms_fp16": {
+   "transformer_diptych": 20.98,
+   "dcae_encode": 14.43,
+   "dcae_decode": 18.29
+  }
+ },
+ "dreamlite": {
+  "unet_params_M": 390.0,
+  "tinyvae_encoder_params_M": 1.2,
+  "tinyvae_decoder_params_M": 1.2,
+  "gflops": {
+   "unet_diptych": 682.7,
+   "tinyvae_encode_512": 122.3,
+   "tinyvae_decode_512": 141.4
+  },
+  "h200_ms_fp16": {
+   "unet_diptych": 24.86,
+   "tinyvae_decode": 2.1
+  }
+ },
+ "autoencoder_fidelity_512": {
+  "n": 64,
+  "data": "random kept klein cartoon3d targets (manifest_v2)",
+  "dcae": {
+   "psnr": 37.5802,
+   "lpips": 0.0057,
+   "lap_ratio": 1.0337
+  },
+  "tinyvae_orig": {
+   "psnr": 33.5666,
+   "lpips": 0.0161,
+   "lap_ratio": 0.9181
+  },
+  "tinyvae_decg2": {
+   "psnr": 30.6665,
+   "lpips": 0.0267,
+   "lap_ratio": 0.8782
+  }
+ }
+}

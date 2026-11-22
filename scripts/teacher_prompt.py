@@ -167,3 +167,34 @@ def sticker_prompt_v5(desc_style, cap, tone, attrs, phrase=None):
     return (f"Redraw the person in this photo as a die-cut chat sticker, {desc_style}. The person is {d}{wear}. {keep}{act}{adult} "
             f"Head and upper body in a close crop with a large head, {'expressive, ' if phrase else ''}thick white outline, isolated "
             f"on a plain flat white background.")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# v6 (2026-11-20, new chat styles chibi / comic_line; cartoon3d data keeps v4/v5). Preview bug: stickers of some synthetic
+# faces got grey hair while the avatar kept dark hair. Cause: the age came from the generator label ("forties") while the
+# photo looks younger (VLM caption "late twenties"), and v5 names "(wrinkles, grey hair)" for 40+ -> klein draws them.
+# v6: age from the VLM caption when present; never names grey hair / wrinkles ("keep the hair colour and the signs of age
+# exactly as in the photo"); the adult-body sentence is optional per style (off for chibi: it fights big-head proportions).
+def _caption_age(cap, attrs):
+    if attrs and cap and (cap.get("age") or "").strip().lower() not in NONE_WORDS:
+        return dict(attrs, age=cap["age"].strip())
+    return attrs
+
+
+def avatar_prompt_v5(desc_style, cap, tone, attrs):
+    return avatar_prompt_v4(desc_style, cap, tone, _caption_age(cap, attrs))
+
+
+def sticker_prompt_v6(desc_style, cap, tone, attrs, phrase=None, adult_body=True):
+    d, wear, age = v4_desc(cap, tone, _caption_age(cap, attrs))
+    if phrase:
+        d = ", ".join(x for x in d.split(", ") if not re.search(r"smil|laugh|grin|frown|neutral|serious", x))
+    keep = ("The sticker shows exactly this person: keep the face, skin tone, age and gender, the same hairstyle, hair length and "
+            "hair colour, and the same clothing in the same colors as in the photo.")
+    act = f" Expression and pose: {phrase}." if phrase else " Keep the expression and head pose from the photo."
+    body = "realistic adult head-to-body ratio, adult shoulders and adult hands, " if adult_body else ""
+    adult = (f" This is an adult in their {age}: {body}keep the hair colour and the signs of age exactly as in the photo; "
+             f"never draw a child or a baby.") if age else ""
+    return (f"Redraw the person in this photo as a die-cut chat sticker, {desc_style}. The person is {d}{wear}. {keep}{act}{adult} "
+            f"Head and upper body in a close crop with a large head, {'expressive, ' if phrase else ''}thick white outline, isolated "
+            f"on a plain flat white background.")

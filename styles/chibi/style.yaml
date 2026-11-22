@@ -1,5 +1,5 @@
 name: chibi
-description: chibi anime style, big head small body, large shiny eyes, cute proportions, cel shading, pastel colors
+description: chibi anime style, big head small body, large shiny eyes, cute proportions, cel shading, clean bright colors, natural skin colors
 refs:
 - ref_000.png
 - ref_001.png
@@ -16,3 +16,4 @@ lora: null
 license: self-generated with FLUX.2-klein-4B (Apache-2.0); prompts/seeds in manifest.jsonl
 short: chibi anime character
 subject_description: chibi anime style, cute simplified proportions, cel shading, pastel colors
+adult_body: false  # 2026-11-20: v6 prompt drops 'realistic adult head-to-body ratio' (fights chibi proportions)

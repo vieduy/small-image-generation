@@ -114,7 +114,7 @@ def main():
     ap.add_argument("--grad-ckpt", action="store_true")
     ap.add_argument("--shared-trunk", action="store_true", help="idea B: down/mid cross-attention reads ONE learned context "
                     "(init = avatar token) instead of the task token, so the down path + mid block run once per photo on the phone")
-    ap.add_argument("--shared-scope", default="down_mid", choices=["down_mid", "down"], help="B: which blocks are shared")
+    ap.add_argument("--shared-scope", default="down_mid", choices=list(DLA.SHARED_SCOPES), help="B: which blocks are shared")
     ap.add_argument("--refine-sigma", type=float, default=0.0, help="3a (2026-11-20): >0 (needs --lora-rank, --init-from) = train a "
                     "SECOND-step LoRA: step 1 = the init student with the adapter off (unchanged), x = (1-s)*x0 + s*noise(seed 1235), "
                     "step 2 = UNet + adapter at sigma s. Tokens frozen. Inference: student_infer.py (2 steps for --refine-tasks)")
@@ -124,6 +124,20 @@ def main():
                     "saved as prune.json")
     ap.add_argument("--drop-attn2", default="", help="#5: comma list of groups whose cross-attention is removed (down,up1 ...); "
                     "saved as drop_attn2.json")
+    ap.add_argument("--joint-styles", default="", help="joint multi-style model (2026-11-20): comma list of extra styles trained "
+                    "together with --style in ONE UNet; each extra style gets its own 22 option tokens (task names '<style>/<task>', "
+                    "init = the --init-from tokens of the same option). Data: data/pairs/<style>/--joint-manifest (prep_style_data.py), "
+                    "needs --proper-flip caches per style; --tgt-cache not supported. Also writes per-style views <tag>_<style>/")
+    ap.add_argument("--joint-manifest", default="manifest_v2.jsonl")
+    ap.add_argument("--style-tokens", type=int, default=0, help="dl8 (2026-11-21), with --joint-styles: factorised context = "
+                    "[N learned style tokens | the 22 option tokens shared by all styles] instead of 22 independent tokens per style")
+    ap.add_argument("--style-film", action="store_true", help="dl8: per-style FiLM after the GroupNorms of mid/up blocks (dl_arch.install_style_film)")
+    ap.add_argument("--distill-w", type=float, default=0.0, help="dl8: weight of an extra latent MSE to a specialist's output for the same "
+                    "photo (--distill-latents), on top of the klein-target losses")
+    ap.add_argument("--distill-latents", default="", help="dl8: 'style=weights/decoder/_zs_<student>_<manifest>.pt,...' (train_decoder.py "
+                    "--build-latents-only caches: zs, zs_f in the style's row order)")
+    ap.add_argument("--style-weights", default="", help="dl9: sampling weight per style (base style first), e.g. 1,2,1; default uniform")
+    ap.add_argument("--distill-style-w", default="", help="dl9: per-style multiplier of --distill-w, e.g. 1,3,1")
     ap.add_argument("--tokens-only", action="store_true", help="#4: freeze the whole UNet, train only the option tokens (smallest pack)")
     ap.add_argument("--only-tasks", default="", help="comma list: train only on these options (e.g. avatar); val is unchanged")
     ap.add_argument("--half-head", type=int, default=-1, help="B part 2: >=0 = from up_blocks.1 on compute only the output half of "
@@ -195,14 +209,45 @@ def main():
         FL = torch.load(ROOT / "data/pairs" / a.style / f"latents_dl_{st}_flip.pt")
         assert FL["key"] == c["key"], "flip cache is stale: rerun scripts/build_flip_cache.py"
         print(f"[dl] proper flip: latents of flipped images ({len(FL['zt_f'])})", flush=True)
+    base_tasks = list(tasks)
+    if a.joint_styles:
+        assert not a.tgt_cache, "--joint-styles: --tgt-cache not supported"
+        js = [x for x in a.joint_styles.split(",") if x]
+        jst = Path(a.joint_manifest).stem
+        for si, s_ in enumerate(js, 1):
+            cs = build_cache_dl(s_, vae, a.joint_manifest, base_tasks)
+            c = {"ids": c["ids"] + [(f"{s_}/{i}", t) for i, t in cs["ids"]], "key": c["key"] + cs["key"],
+                 "zi": torch.cat([c["zi"], cs["zi"]]), "zt": torch.cat([c["zt"], cs["zt"]]),
+                 "img256": torch.cat([c["img256"], cs["img256"]]), "task": torch.cat([c["task"], cs["task"] + si * len(base_tasks)])}
+            if a.proper_flip:
+                F2 = torch.load(ROOT / "data/pairs" / s_ / f"latents_dl_{jst}_flip.pt")
+                assert F2["key"] == cs["key"], f"{s_}: flip cache is stale: rerun scripts/build_flip_cache.py --style {s_}"
+                FL = {"key": FL["key"] + F2["key"], "zi_f": torch.cat([FL["zi_f"], F2["zi_f"]]), "zt_f": torch.cat([FL["zt_f"], F2["zt_f"]])}
+            print(f"[dl] joint style {s_}: {len(cs['task'])} pairs", flush=True)
+            del cs
+        tasks = base_tasks + [f"{s_}/{t}" for s_ in js for t in base_tasks]
+        n = len(c["task"])
+        print(f"[dl] joint model: {len(tasks)} options, {n} pairs", flush=True)
+    ZS = None
+    if a.distill_w > 0:
+        dmap = dict(x.split("=", 1) for x in a.distill_latents.split(","))
+        zs_, zf_, keys_ = [], [], []
+        for s_ in [a.style] + ([x for x in a.joint_styles.split(",") if x] if a.joint_styles else []):
+            Zd = torch.load(ROOT / dmap[s_])
+            zs_.append(Zd["zs"]); zf_.append(Zd["zs_f"]); keys_ += Zd["key"]
+        assert keys_ == c["key"], "distill latents do not match the training rows"
+        ZS = {"zs": torch.cat(zs_), "zs_f": torch.cat(zf_)}
+        print(f"[dl] distill: specialist latents for {len(keys_)} pairs ({a.distill_latents}), w={a.distill_w}", flush=True)
     if a.tgt_cache:
         TG = np.load(ROOT / "data/pairs" / a.style / f"tgt512_dl_{st}.u8", mmap_mode="r")
         assert TG.shape[0] == n, f"tgt512 cache rows {TG.shape[0]} != {n}: rerun scripts/build_flip_cache.py"
     tok_file = ROOT / f"weights/student/_dl_tokens_{a.style}_{len(tasks)}.pt"
     if a.init_from:  # tokens of the trained student (its first len(tasks) options), trained further
         t = torch.load(ROOT / "weights/student" / a.init_from / "task_emb.pt")
-        assert t["tasks"][:len(tasks)] == tasks, f"{a.init_from} task order {t['tasks'][:len(tasks)]} != {tasks}"
-        emb0, mask = t["emb"][:len(tasks)], t["mask"][:len(tasks)]
+        nb = len(base_tasks)
+        assert t["tasks"][:nb] == base_tasks, f"{a.init_from} task order {t['tasks'][:nb]} != {base_tasks}"
+        rows_ = [t["tasks"].index(x) if x in t["tasks"] else base_tasks.index(x.split("/", 1)[1]) for x in tasks]
+        emb0, mask = t["emb"][rows_], t["mask"][rows_]
     elif tok_file.exists():
         t = torch.load(tok_file)
         emb0, mask = t["emb"], t["mask"]
@@ -212,7 +257,7 @@ def main():
         emb0, mask = init_tokens(a.style, tasks, photos, tok_file)
     emb = torch.nn.Parameter(emb0.float().to(DEV))
     mask = mask.to(DEV)
-    unet = DLA.load_unet(ROOT / "weights/student" / a.init_from / "unet" if a.init_from else None)
+    unet = DLA.load_unet(ROOT / "weights/student" / a.init_from / "unet" if a.init_from else None, style_film=False)
     if a.lora_rank > 0:  # same adapter targets as the DreamLite DMD packs (train_dmd.py)
         from peft import LoraConfig, get_peft_model
         unet.requires_grad_(False)
@@ -238,6 +283,41 @@ def main():
         assert a.lora_rank == 0, "--tokens-only: no LoRA"
         unet.requires_grad_(False)
         print("[dl] tokens only: UNet frozen", flush=True)
+    NB = len(base_tasks)
+    NS = len(tasks) // NB
+    film_init = None
+    sfi_ = ROOT / "weights/student" / (a.init_from or "") / "style_film.pt"
+    if a.init_from and sfi_.exists():  # init (e.g. dl8) carries per-style FiLM: start from its values (loaded without hooks)
+        film_init = torch.load(sfi_)["film"]
+        print(f"[dl] init FiLM taken over ({len(film_init)} GroupNorms)", flush=True)
+    if a.style_film:
+        nm_, npar_ = DLA.install_style_film(unet, NS, film=film_init, trainable=True)
+        print(f"[dl] style FiLM: {nm_} GroupNorms x {NS} styles, {npar_} params", flush=True)
+    CTX = lambda tk: (emb[tk], mask[tk])
+    opt_emb = style_emb = None
+    if a.style_tokens > 0:
+        assert a.joint_styles, "--style-tokens needs --joint-styles"
+        stf_ = ROOT / "weights/student" / (a.init_from or "") / "style_tokens.pt"
+        if a.init_from and stf_.exists():  # continue a factorised student (dl8 -> dl9)
+            st_ = torch.load(stf_)
+            assert st_["styles"] == [a.style] + [x for x in a.joint_styles.split(",") if x] and st_["style_emb"].shape[1] == a.style_tokens
+            opt_emb = torch.nn.Parameter(st_["opt_emb"].float().to(DEV))
+            opt_mask = st_["opt_mask"].to(DEV)
+            style_emb = torch.nn.Parameter(st_["style_emb"].float().to(DEV))
+            print(f"[dl] style/option tokens taken over from {a.init_from}", flush=True)
+        else:
+            opt_emb = torch.nn.Parameter(emb0[:NB].float().to(DEV))
+            opt_mask = mask[:NB]
+            g_ = torch.Generator().manual_seed(0)
+            base_ = emb0[:NB, :a.style_tokens].float().mean(0, keepdim=True)
+            style_emb = torch.nn.Parameter((base_ + 0.02 * base_.std() * torch.randn(NS, a.style_tokens, base_.shape[-1], generator=g_)).to(DEV))
+        ones_ = torch.ones(a.style_tokens, dtype=mask.dtype, device=DEV)
+
+        def CTX(tk):
+            s_, k_ = tk // NB, tk % NB
+            return (torch.cat([style_emb[s_], opt_emb[k_]], 1),
+                    torch.cat([ones_.expand(len(tk), -1), opt_mask[k_]], 1))
+        print(f"[dl] factorised context: {NS} styles x {a.style_tokens} style tokens + {NB} shared option tokens", flush=True)
     if a.half_head >= 0:
         assert not hasattr(unet, "_half_head"), "init already has a half head"
         DLA.install_half_head(unet, a.half_head)
@@ -289,7 +369,7 @@ def main():
 
     val = []
     for k in range(len(tasks)):
-        val += [i for i in range(n) if c["task"][i] == k][:32 if k < 2 else 4]
+        val += [i for i in range(n) if c["task"][i] == k][:32 if k % len(base_tasks) < 2 else 4]
     vs = set(val)
     tr = [i for i in range(n) if i not in vs]
     if a.drop_list:
@@ -307,8 +387,10 @@ def main():
         assert a.lora_rank > 0 and a.init_from, "--refine-sigma needs --lora-rank and --init-from"
         emb.requires_grad_(False)  # step 1 must stay the init student
         print(f"[dl] refiner (3a): step 2 at sigma {a.refine_sigma}, LoRA r{a.lora_rank}; step 1 = {a.init_from} (adapter off), tokens frozen", flush=True)
-    tok_params = [emb] + ([unet_raw.shared_emb] if a.shared_trunk else [])
-    groups = [{"params": [p for n_, p in unet_raw.named_parameters() if p.requires_grad and n_ != "shared_emb"], "lr": a.lr},
+    tok_params = ([opt_emb, style_emb] if a.style_tokens > 0 else [emb]) + ([unet_raw.shared_emb] if a.shared_trunk else [])
+    film_params = [p for n_, p in unet_raw.named_parameters() if n_.startswith("style_film")]
+    groups = [{"params": [p for n_, p in unet_raw.named_parameters() if p.requires_grad and n_ != "shared_emb" and not n_.startswith("style_film")], "lr": a.lr},
+              {"params": film_params, "lr": a.emb_lr, "weight_decay": 0},
               {"params": tok_params, "lr": a.emb_lr, "weight_decay": 0}]
     if dvae is not None:
         groups.append({"params": list(dvae.decoder.parameters()), "lr": a.dec_lr, "weight_decay": 0})
@@ -442,8 +524,19 @@ def main():
             if a.refine_sigma > 0:
                 zp = DLA.refine_forward(NET["m"], unet_raw, zi, emb[tk], mask[tk], a.refine_sigma)
             else:
-                zp = DLA.forward(NET["m"], zi, emb[tk], mask[tk])
+                if a.style_film:
+                    unet_raw._film_style = tk // NB
+                zp = DLA.forward(NET["m"], zi, *CTX(tk))
             mse = F.mse_loss(zp[:, :zt.shape[1]].float(), zt)
+            losses.distill = None
+            if ZS is not None:
+                fl_ = batch.flip if batch.flip is not None else torch.zeros(len(batch.idx), dtype=torch.bool, device=DEV)
+                zs_t = torch.where(fl_.view(-1, 1, 1, 1).cpu(), ZS["zs_f"][batch.idx], ZS["zs"][batch.idx]).to(DEV).float()
+                if a.distill_style_w:
+                    dsw_ = torch.tensor([float(x) for x in a.distill_style_w.split(",")], device=DEV)[tk // NB]
+                    losses.distill = ((zp[:, :zt.shape[1]].float() - zs_t) ** 2).mean((1, 2, 3)).mul(dsw_).mean()
+                else:
+                    losses.distill = F.mse_loss(zp[:, :zt.shape[1]].float(), zs_t)
             dec512 = DLA.decode(DV, zp.to(torch.bfloat16)).float().clamp(-1, 1)
             dec = F.interpolate(dec512, size=256, mode="bilinear", antialias=True)
             lpl = lp(dec, im).mean()
@@ -479,18 +572,29 @@ def main():
         t8 = lambda x: ((F.interpolate(x, size=256, mode="area").clamp(-1, 1) + 1) * 127.5).byte().permute(0, 2, 3, 1).cpu().numpy()
         c8 = lambda x: t8(x[..., 112:368, 128:384])  # native 512 px face-area crop (1:1 pixels; shows the detail the 256 tiles hide)
         rows = np.concatenate([t8(src), t8(im), t8(dec), c8(t512), c8(d512)], 2)  # photo | klein | student | klein 1:1 | student 1:1
-        Image.fromarray(np.concatenate(list(rows), 0)).save(out / f"samples_{step:05d}.jpg", quality=88)
+        try:  # a preview image must never kill a run (NFS I/O error killed pk_chibi at step 6000, 2026-11-20)
+            Image.fromarray(np.concatenate(list(rows), 0)).save(out / f"samples_{step:05d}.jpg", quality=88)
+        except OSError as e:
+            print(f"[dl] samples_{step:05d}.jpg not written: {e}", flush=True)
 
     if not a.bench and main0:
         samples(0)
     if ddp:
         dist.barrier()
     t0 = time.time()
+    if a.joint_styles:
+        nb_ = len(base_tasks)
+        tr_by = [[i for i in tr if int(c["task"][i]) // nb_ == si] for si in range(len(tasks) // nb_)]
+        print(f"[dl] joint: style-balanced sampling, pairs per style {[len(x) for x in tr_by]}", flush=True)
     for step in range(1, (a.bench or a.steps) + 1):
         if a.bench and step == 11:
             torch.cuda.synchronize()
             tb = time.time()
-        idx = torch.tensor(random.sample(tr, a.bs // world))
+        if a.joint_styles:  # style-balanced: each sample picks a style uniformly, then a pair of that style (chibi has fewer pairs)
+            sw_ = [float(x) for x in a.style_weights.split(",")] if a.style_weights else [1.0] * len(tr_by)
+            idx = torch.tensor([random.choice(tr_by[random.choices(range(len(tr_by)), weights=sw_)[0]]) for _ in range(a.bs // world)])
+        else:
+            idx = torch.tensor(random.sample(tr, a.bs // world))
         zi, zt, im, tk = batch(idx, True)
         mse, lpl, _ = losses(zi, zt, im, tk)
         loss = mse + a.lpips_w * lpl
@@ -501,6 +605,9 @@ def main():
             loss = loss + a.eye_w * el["eye"]
         if "eye_lpips" in el:
             loss = loss + a.eye_lpips_w * el["eye_lpips"]
+        if getattr(losses, "distill", None) is not None:
+            el["distill"] = losses.distill
+            loss = loss + a.distill_w * losses.distill
         if losses.pix is not None:
             el["pix_l1"] = losses.pix
             loss = loss + a.pix_l1_w * losses.pix
@@ -514,10 +621,12 @@ def main():
             loss = loss + a.gan_w * el["g_gan"]
         opt.zero_grad(set_to_none=True)
         loss.backward()
-        if ddp and emb.grad is not None:  # task tokens live outside the DDP module
-            dist.all_reduce(emb.grad)
-            emb.grad /= world
-        torch.nn.utils.clip_grad_norm_([p for p in unet_raw.parameters() if p.requires_grad] + [emb], 1.0)
+        if ddp:  # task tokens (and dl8 style / shared option tokens) live outside the DDP module
+            for tp_ in tok_params:
+                if tp_.grad is not None:
+                    dist.all_reduce(tp_.grad)
+                    tp_.grad /= world
+        torch.nn.utils.clip_grad_norm_([p for p in unet_raw.parameters() if p.requires_grad] + tok_params, 1.0)
         if dvae is not None:
             torch.nn.utils.clip_grad_norm_(dvae.decoder.parameters(), 1.0)
         opt.step()
@@ -572,7 +681,17 @@ def main():
         dist.destroy_process_group()
         return
     unet_raw.save_pretrained(out / ("unet_lora" if a.lora_rank > 0 else "unet"))
-    torch.save({"emb": emb.detach().cpu(), "mask": mask.cpu(), "tasks": tasks}, out / "task_emb.pt")
+    if a.style_tokens > 0:  # dl8: task_emb.pt = style 0's full context per option (the dir is the base-style view); raw factors kept
+        with torch.no_grad():
+            e0_, m0_ = CTX(torch.arange(NB, device=DEV))
+        torch.save({"emb": e0_.detach().cpu(), "mask": m0_.cpu(), "tasks": base_tasks}, out / "task_emb.pt")
+        torch.save({"style_emb": style_emb.detach().cpu(), "opt_emb": opt_emb.detach().cpu(), "opt_mask": opt_mask.cpu(),
+                    "styles": [a.style] + [x for x in a.joint_styles.split(",") if x], "tasks": base_tasks}, out / "style_tokens.pt")
+    else:
+        torch.save({"emb": emb.detach().cpu(), "mask": mask.cpu(), "tasks": tasks}, out / "task_emb.pt")
+    if a.style_film:
+        torch.save({"n_styles": NS, "film": DLA.film_state(unet_raw)}, out / "style_film.pt")
+        (out / "film_style.json").write_text(json.dumps({"style": 0}))
     if a.shared_trunk:
         torch.save({"emb": unet_raw.shared_emb.detach().cpu(), "mask": unet_raw.shared_mask.cpu(), "scope": a.shared_scope}, out / "shared_ctx.pt")
     elif hasattr(unet_raw, "shared_emb"):  # init had a (frozen) shared trunk: keep it
@@ -589,6 +708,26 @@ def main():
     (out / "config.json").write_text(json.dumps(vars(a) | {"arch": "dreamlite", "init": a.init_from or f"{DLA.DL_REPO}@{DLA.DL_REV}", "param": "flow_x0",
                                                            "T": 1000, "decoder": "DreamLite TinyVAE", "train_pairs": len(tr),
                                                            "minutes": round((time.time() - t0) / 60, 1)}, indent=1))
+    if a.joint_styles:  # per-style views: same UNet, that style's 22 tokens under the plain task names (eval scripts unchanged)
+        nb = len(base_tasks)
+        for si, s_ in enumerate([x for x in a.joint_styles.split(",") if x], 1):
+            v = ROOT / "weights/student" / f"{a.tag}_{s_}"
+            v.mkdir(exist_ok=True)
+            if not (v / "unet").exists():
+                os.symlink(f"../{a.tag}/unet", v / "unet")
+            if a.style_tokens > 0:
+                with torch.no_grad():
+                    es_, ms_ = CTX(torch.arange(NB, device=DEV) + si * NB)
+                torch.save({"emb": es_.detach().cpu(), "mask": ms_.cpu(), "tasks": base_tasks}, v / "task_emb.pt")
+            else:
+                torch.save({"emb": emb.detach().cpu()[si * nb:(si + 1) * nb].clone(), "mask": mask.cpu()[si * nb:(si + 1) * nb].clone(), "tasks": base_tasks},
+                           v / "task_emb.pt")
+            if a.style_film:
+                if not (v / "style_film.pt").exists():
+                    os.symlink(f"../{a.tag}/style_film.pt", v / "style_film.pt")
+                (v / "film_style.json").write_text(json.dumps({"style": si}))
+            (v / "config.json").write_text((out / "config.json").read_text().replace(f'"style": "{a.style}"', f'"style": "{s_}"'))
+            print(f"[dl] view {v.name}: {s_} tokens", flush=True)
     print(f"[dl] done {(time.time() - t0) / 60:.1f} min -> {out}", flush=True)
     os.system(f"chmod -R a+rwX '{out}'")  # cross-node readability (root-squashed NFS)
     if ddp:

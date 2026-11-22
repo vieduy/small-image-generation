@@ -1,0 +1,2 @@
+tag                      thanks    shrug    party       ok     wave facepalm   thumbs    happy     wink     cool     mean
+dl9_comic_line_dec8_comic_line     0.53     0.63     0.63     0.68     0.69     0.67     0.76     0.80     0.88     0.77     0.70

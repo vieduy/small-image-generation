@@ -1,0 +1,14 @@
+type: task
+name: b1-tiny-dcae
+# Plan B1 as a dstack TASK (2026-11-20): runs without client SSH (SSH from the work server to h200-gpu-fleet fails since ~14:05 UTC,
+# "Permission denied (publickey)" at 10.10.0.123). Same image + volume as dev-duyhv-2. Applied 2026-11-20 on the user's go.
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+fleets:
+  - h200-gpu-fleet
+commands:
+  - bash /mnt/project/kchat/duyhv/i2i-sticker-avatar/scripts/b1_tiny_duyhv.sh
+resources:
+  gpu: H200NVL:2
+  shm_size: 64GB

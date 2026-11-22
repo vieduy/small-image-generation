@@ -1,0 +1,172 @@
+{
+ "comic_line": {
+  "avatar": {
+   "n": 24,
+   "keep": 1.0,
+   "id_pass": 1.0,
+   "style_dino": 0.628,
+   "dL_median": 13.3,
+   "sticker_pass": NaN
+  },
+  "sticker": {
+   "n": 24,
+   "keep": 0.88,
+   "id_pass": 0.88,
+   "style_dino": 0.64,
+   "dL_median": 9.8,
+   "sticker_pass": 1.0
+  },
+  "expr": {
+   "n": 72,
+   "keep": 0.92,
+   "id_pass": 0.92,
+   "style_dino": 0.634,
+   "dL_median": 10.2,
+   "sticker_pass": 1.0
+  },
+  "all": {
+   "n": 120,
+   "keep": 0.93,
+   "id_pass": 0.93,
+   "style_dino": 0.634,
+   "dL_median": 10.2,
+   "sticker_pass": 1.0
+  }
+ },
+ "chibi": {
+  "avatar": {
+   "n": 24,
+   "keep": 0.5,
+   "id_pass": 0.5,
+   "style_dino": 0.657,
+   "dL_median": 20.2,
+   "sticker_pass": NaN
+  },
+  "sticker": {
+   "n": 24,
+   "keep": 0.29,
+   "id_pass": 0.29,
+   "style_dino": 0.727,
+   "dL_median": 19.2,
+   "sticker_pass": 1.0
+  },
+  "expr": {
+   "n": 72,
+   "keep": 0.38,
+   "id_pass": 0.38,
+   "style_dino": 0.776,
+   "dL_median": 19.2,
+   "sticker_pass": 1.0
+  },
+  "all": {
+   "n": 120,
+   "keep": 0.38,
+   "id_pass": 0.38,
+   "style_dino": 0.742,
+   "dL_median": 19.2,
+   "sticker_pass": 1.0
+  }
+ },
+ "toy3d": {
+  "avatar": {
+   "n": 24,
+   "keep": 0.88,
+   "id_pass": 0.88,
+   "style_dino": 0.348,
+   "dL_median": 7.1,
+   "sticker_pass": NaN
+  },
+  "sticker": {
+   "n": 24,
+   "keep": 0.88,
+   "id_pass": 0.88,
+   "style_dino": 0.297,
+   "dL_median": -0.6000000000000001,
+   "sticker_pass": 1.0
+  },
+  "expr": {
+   "n": 72,
+   "keep": 0.6,
+   "id_pass": 0.6,
+   "style_dino": 0.394,
+   "dL_median": 0.8,
+   "sticker_pass": 1.0
+  },
+  "all": {
+   "n": 120,
+   "keep": 0.71,
+   "id_pass": 0.71,
+   "style_dino": 0.366,
+   "dL_median": 1.8,
+   "sticker_pass": 1.0
+  }
+ },
+ "anime": {
+  "avatar": {
+   "n": 24,
+   "keep": 0.96,
+   "id_pass": 0.96,
+   "style_dino": 0.619,
+   "dL_median": 16.9,
+   "sticker_pass": NaN
+  },
+  "sticker": {
+   "n": 24,
+   "keep": 0.96,
+   "id_pass": 0.96,
+   "style_dino": 0.626,
+   "dL_median": 14.3,
+   "sticker_pass": 1.0
+  },
+  "expr": {
+   "n": 72,
+   "keep": 0.82,
+   "id_pass": 0.86,
+   "style_dino": 0.608,
+   "dL_median": 14.5,
+   "sticker_pass": 0.96
+  },
+  "all": {
+   "n": 120,
+   "keep": 0.88,
+   "id_pass": 0.9,
+   "style_dino": 0.614,
+   "dL_median": 14.9,
+   "sticker_pass": 0.97
+  }
+ },
+ "flat_vector": {
+  "avatar": {
+   "n": 24,
+   "keep": 0.58,
+   "id_pass": 0.58,
+   "style_dino": 0.598,
+   "dL_median": 14.5,
+   "sticker_pass": NaN
+  },
+  "sticker": {
+   "n": 24,
+   "keep": 0.58,
+   "id_pass": 0.58,
+   "style_dino": 0.635,
+   "dL_median": 9.2,
+   "sticker_pass": 1.0
+  },
+  "expr": {
+   "n": 72,
+   "keep": 0.54,
+   "id_pass": 0.54,
+   "style_dino": 0.65,
+   "dL_median": 10.6,
+   "sticker_pass": 1.0
+  },
+  "all": {
+   "n": 120,
+   "keep": 0.56,
+   "id_pass": 0.56,
+   "style_dino": 0.636,
+   "dL_median": 11.0,
+   "sticker_pass": 1.0
+  }
+ }
+}

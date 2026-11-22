@@ -1,0 +1,2 @@
+tag                      thanks    shrug    party       ok     wave facepalm   thumbs    happy     wink     cool     mean
+dl9_chibi_dec8_chibi       0.74     0.89     0.77     0.75     0.69     0.64     0.74     0.75     0.69     0.76     0.74

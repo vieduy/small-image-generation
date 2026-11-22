@@ -21,7 +21,7 @@ RES = 512
 LAT = RES // 8  # 64
 
 
-def load_unet(path=None, dtype=torch.float32):
+def load_unet(path=None, dtype=torch.float32, style_film=True):
     from diffusers import DreamLiteUNetModel
     if path is None:
         return DreamLiteUNetModel.from_pretrained(DL_REPO, subfolder="unet", revision=DL_REV, torch_dtype=dtype)
@@ -31,6 +31,12 @@ def load_unet(path=None, dtype=torch.float32):
     if sc.exists():  # shared-trunk student (idea B): down/mid cross-attention reads one learned context, not the task token
         c = torch.load(sc)
         install_shared_trunk(unet, c["emb"].to(dtype), c["mask"], scope=c.get("scope", "down_mid"))
+    sf = Path(path).parent / "style_film.pt"
+    if sf.exists() and style_film:  # one-model multi-style (dl8): per-style FiLM; a view dir fixes the style (film_style.json, default 0)
+        import json
+        d = torch.load(sf)
+        fs = Path(path).parent / "film_style.json"
+        install_style_film(unet, d["n_styles"], film=d["film"], fixed_style=json.loads(fs.read_text())["style"] if fs.exists() else 0)
     pr = Path(path).parent / "prune.json"
     if pr.exists():  # Plan A smaller student: these residual units are removed
         import json
@@ -63,6 +69,28 @@ class _SharedCtxProc:
         return self.inner(attn, hidden_states, encoder_hidden_states=encoder_hidden_states, attention_mask=attention_mask, **kw)
 
 
+SHARED_SCOPES = {  # which cross-attention modules read the shared context instead of the option token
+    "down": lambda n: n.startswith("down_blocks"),
+    "down_mid": lambda n: n.startswith(("down_blocks", "mid_block")),
+    # paper P2 (2026-11-20): option enters only after the last self-attention (up_blocks.1: 6 modules)
+    "down_mid_up0": lambda n: n.startswith(("down_blocks", "mid_block", "up_blocks.0.")),
+    # paper P2c control: option only in up_blocks.0.attentions.2 (4 modules, self-attention still follows inside it)
+    "only_up0a2": lambda n: not n.startswith("up_blocks.0.attentions.2."),
+    # E1 (2026-11-20, reports/e1_status.md section 5; user run names in brackets). True = reads the shared (neutral) context.
+    # (a) 4 option inputs, entry moved:
+    "only_mid": lambda n: not n.startswith("mid_block."),                                    # [mid4]
+    "only_up0a0": lambda n: not n.startswith("up_blocks.0.attentions.0."),                   # [up0b1_4 = up0start_4]
+    "only_up0a1": lambda n: not n.startswith("up_blocks.0.attentions.1."),                   # [up0b2_4]
+    "only_up1a01": lambda n: not n.startswith(("up_blocks.1.attentions.0.", "up_blocks.1.attentions.1.")),  # [up1_4]
+    # (b) entry fixed, number of option inputs varied:
+    "only_up0a2_tb0": lambda n: n != "up_blocks.0.attentions.2.transformer_blocks.0.attn2",  # [last1]
+    "only_up0a2_tb01": lambda n: not n.startswith(("up_blocks.0.attentions.2.transformer_blocks.0.",
+                                                   "up_blocks.0.attentions.2.transformer_blocks.1.")),  # [last2]
+    "up0a2_plus_up1": lambda n: not n.startswith(("up_blocks.0.attentions.2.", "up_blocks.1.")),  # [last10]
+    "only_up0": lambda n: not n.startswith("up_blocks.0."),                                  # [up0start_12]
+}
+
+
 def install_shared_trunk(unet, emb, mask, trainable=False, scope="down_mid"):
     """emb [1, L, 2048] (raw token space, projected by the UNet's own encoder_hid_proj), mask [1, L] (1 = token).
     Registered on the UNet (moves with .to(); a Parameter if trainable). Same additive mask convention as the UNet (-10000)."""
@@ -73,7 +101,7 @@ def install_shared_trunk(unet, emb, mask, trainable=False, scope="down_mid"):
     unet.register_buffer("shared_mask", mask.detach().clone().float(), persistent=False)
     n = 0
     for name, mod in unet.named_modules():
-        if name.endswith("attn2") and (name.startswith("down_blocks") or (scope == "down_mid" and name.startswith("mid_block"))):
+        if name.endswith("attn2") and SHARED_SCOPES[scope](name):
             mod.set_processor(_SharedCtxProc(mod.processor, unet))
             n += 1
 
@@ -87,6 +115,67 @@ def install_shared_trunk(unet, emb, mask, trainable=False, scope="down_mid"):
     unet._shared_trunk_modules = n
     unet._shared_scope = scope
     return n
+
+
+def _film_hook(owner, key, fixed):
+    def hook(mod, inp, out):
+        s = owner._film_style if fixed is None else fixed
+        g, b = owner.style_film[key + "__g"][s], owner.style_film[key + "__b"][s]
+        shp = (-1, out.shape[1], 1, 1) if g.dim() == 2 else (1, -1, 1, 1)
+        return out * (1 + g.to(out.dtype).view(shp)) + b.to(out.dtype).view(shp)
+    return hook
+
+
+def install_style_film(unet, n_styles, film=None, fixed_style=None, trainable=False):
+    """One-model multi-style (2026-11-21, dl8): per-style FiLM (conditional normalisation, Dumoulin et al. 2017) after every
+    GroupNorm of mid_block, up_blocks and conv_norm_out: y = GN(x) * (1 + g[style]) + b[style]; g = b = 0 at init (= the base
+    model). Training sets unet._film_style = LongTensor [B]; a saved view fixes one style. ~KB per style."""
+    mods = [(n, m) for n, m in unet.named_modules() if isinstance(m, torch.nn.GroupNorm)
+            and (n.startswith(("mid_block", "up_blocks")) or n == "conv_norm_out")]
+    P = torch.nn.ParameterDict()
+    for n, m in mods:
+        k = n.replace(".", "__")
+        g = film[n][0].clone() if film else torch.zeros(n_styles, m.num_channels)
+        b = film[n][1].clone() if film else torch.zeros(n_styles, m.num_channels)
+        P[k + "__g"] = torch.nn.Parameter(g.float(), requires_grad=trainable)
+        P[k + "__b"] = torch.nn.Parameter(b.float(), requires_grad=trainable)
+    unet.style_film = P
+    unet._film_style = None
+    unet._film_names = [n for n, _ in mods]
+    unet._film_hooks = [m.register_forward_hook(_film_hook(unet, n.replace(".", "__"), fixed_style)) for n, m in mods]
+    return len(mods), sum(m.num_channels for _, m in mods) * 2 * n_styles
+
+
+def remove_style_film(unet):
+    for h in unet._film_hooks:
+        h.remove()
+    del unet.style_film
+    for k in ("_film_hooks", "_film_names", "_film_style"):
+        if hasattr(unet, k):
+            delattr(unet, k)
+
+
+def film_state(unet):
+    return {n: (unet.style_film[n.replace(".", "__") + "__g"].detach().cpu(), unet.style_film[n.replace(".", "__") + "__b"].detach().cpu())
+            for n in unet._film_names}
+
+
+def install_decoder_film(vae, n_styles, film=None, fixed_style=None, trainable=False):
+    """Same FiLM for the TinyVAE decoder (no norms there): after every AutoencoderTinyBlock of the decoder."""
+    from diffusers.models.autoencoders.vae import AutoencoderTinyBlock
+    mods = [(f"layers.{i}", m) for i, m in enumerate(vae.decoder.layers) if isinstance(m, AutoencoderTinyBlock)]
+    P = torch.nn.ParameterDict()
+    for n, m in mods:
+        k = n.replace(".", "__")
+        C = m.conv[-1].out_channels
+        P[k + "__g"] = torch.nn.Parameter((film[n][0].clone() if film else torch.zeros(n_styles, C)).float(), requires_grad=trainable)
+        P[k + "__b"] = torch.nn.Parameter((film[n][1].clone() if film else torch.zeros(n_styles, C)).float(), requires_grad=trainable)
+    vae.decoder.style_film = P
+    vae.decoder._film_style = None
+    vae.decoder._film_names = [n for n, _ in mods]
+    for n, m in mods:
+        m.register_forward_hook(_film_hook(vae.decoder, n.replace(".", "__"), fixed_style))
+    return len(mods)
 
 
 class _SkipLayer(torch.nn.Module):
@@ -178,7 +267,16 @@ def remove_half_head(unet):
 def load_vae(dtype=torch.float32, path=None):  # path: a fine-tuned copy (scripts/train_decoder.py), default = DreamLite's TinyVAE
     from diffusers import AutoencoderTiny
     if path is not None:
-        return AutoencoderTiny.from_pretrained(path, torch_dtype=dtype)
+        v = AutoencoderTiny.from_pretrained(path, torch_dtype=dtype)
+        from pathlib import Path
+        sf = Path(path) / "style_film_dec.pt"
+        if sf.exists():  # one multi-style decoder (dec8): per-style FiLM, the view fixes the style
+            import json
+            d = torch.load(sf)
+            fs = Path(path) / "film_style.json"
+            install_decoder_film(v, d["n_styles"], film=d["film"], fixed_style=json.loads(fs.read_text())["style"] if fs.exists() else 0)
+            v.decoder.style_film.to(dtype)
+        return v
     return AutoencoderTiny.from_pretrained(DL_REPO, subfolder="vae", revision=DL_REV, torch_dtype=dtype)
 
 

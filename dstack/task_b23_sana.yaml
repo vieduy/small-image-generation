@@ -1,0 +1,14 @@
+type: task
+name: b23-sana
+# Plan B2 + B3 (2026-11-20, user "queue b3, not to ask me again"): Sana-Sprint latent encoding + two one-step students + evals.
+# Submitted automatically by scripts/queue_b23.sh (on the work server) after task b1-tiny-dcae has finished.
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+fleets:
+  - h200-gpu-fleet
+commands:
+  - bash /mnt/project/kchat/duyhv/i2i-sticker-avatar/scripts/b23_sana.sh
+resources:
+  gpu: H200NVL:2
+  shm_size: 64GB
