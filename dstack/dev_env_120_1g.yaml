@@ -1,0 +1,13 @@
+type: dev-environment
+name: dev-duyhv
+# 2026-11-23 (user: "submit dev-duyhv to register h200 gpu"): 1x H200 NVL on h200-120-fleet (7/8 busy -> only 1 free);
+# h200-gpu-fleet shows 0/8 busy but its host gpu-h200-123 still has a hung NVIDIA driver (load ~12,700), so not used.
+image: pytorch/pytorch:2.9.1-cuda12.8-cudnn9-devel
+ide: vscode
+volumes:
+  - /mnt/project/kchat:/mnt/project/kchat
+fleets:
+  - h200-120-fleet
+resources:
+  gpu: H200NVL:1
+  shm_size: 64GB

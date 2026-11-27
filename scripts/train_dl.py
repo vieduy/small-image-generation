@@ -138,6 +138,14 @@ def main():
                     "--build-latents-only caches: zs, zs_f in the style's row order)")
     ap.add_argument("--style-weights", default="", help="dl9: sampling weight per style (base style first), e.g. 1,2,1; default uniform")
     ap.add_argument("--distill-style-w", default="", help="dl9: per-style multiplier of --distill-w, e.g. 1,3,1")
+    ap.add_argument("--teacher-latents", default="", help="stage 4 (2026-11-23): data/pairs/<style>/teacher_<tag>_s<n>.pt (scripts/"
+                    "s3_teacher_pairs.py): replace the klein target latents (plain + flipped photo) by the multi-step teacher's, sampled "
+                    "from the phone's fixed noise; pixel targets (256 and 512) = TinyVAE decode of those latents")
+    ap.add_argument("--extra-pairs", default="", help="with --teacher-latents (2026-11-25): extra teacher pairs on real photos "
+                    "(scripts/s5_real_pairs.py -> data/pairs/real_teacher/teacher_tB1_real.pt), appended to the training rows")
+    ap.add_argument("--extra-skin-max", type=float, default=10.0, help="keep extra pairs with skin dL* <= this (face found in both)")
+    ap.add_argument("--extra-skin-min", type=float, default=-10.0)
+    ap.add_argument("--extra-no-filter", action="store_true", help="keep ALL extra pairs (user 2026-11-25: 'remove the skin filter')")
     ap.add_argument("--tokens-only", action="store_true", help="#4: freeze the whole UNet, train only the option tokens (smallest pack)")
     ap.add_argument("--only-tasks", default="", help="comma list: train only on these options (e.g. avatar); val is unchanged")
     ap.add_argument("--half-head", type=int, default=-1, help="B part 2: >=0 = from up_blocks.1 on compute only the output half of "
@@ -148,6 +156,8 @@ def main():
                     "channels start so the output equals the init (UNet extra conv_out small random, decoder extra input weights 0)")
     ap.add_argument("--dec-lr", type=float, default=1e-4)
     ap.add_argument("--pix-l1-w", type=float, default=0.0, help="L1 on the full 512 px output vs the klein target")
+    ap.add_argument("--save-at", default="", help="2026-11-26 (tS4 long run): comma list of steps; at each, a plain-recipe snapshot "
+                    "(unet + task_emb.pt + config.json) -> weights/student/<tag>_s<step>/ for checkpoint evals. Mid-schedule: cosine lr not annealed")
     ap.add_argument("--drop-list", default=None, help="json list of [id, task] training pairs to leave out (e.g. data/pairs/<style>/"
                     "drop_skin_lighten.json from scripts/make_skin_drop.py); caches and val split unchanged")
     ap.add_argument("--init-from", default=None, help="start from a trained DreamLite student tag (UNet + tokens/mask), e.g. dl1")
@@ -238,6 +248,30 @@ def main():
         assert keys_ == c["key"], "distill latents do not match the training rows"
         ZS = {"zs": torch.cat(zs_), "zs_f": torch.cat(zf_)}
         print(f"[dl] distill: specialist latents for {len(keys_)} pairs ({a.distill_latents}), w={a.distill_w}", flush=True)
+    if a.teacher_latents:
+        assert not a.tgt_cache and not a.joint_styles, "--teacher-latents: no --tgt-cache / --joint-styles"
+        TL = torch.load(ROOT / a.teacher_latents)
+        assert TL["key"] == c["key"], "teacher latents do not match the training rows"
+        c["zt"] = TL["zt"].to(c["zt"].dtype)
+        if a.proper_flip:
+            FL["zt_f"] = TL["zt_f"].to(FL["zt_f"].dtype)
+        print(f"[dl] teacher targets: {a.teacher_latents} ({len(TL['key'])} rows, setting {TL.get('setting')})", flush=True)
+        del TL
+    if a.extra_pairs:
+        assert a.teacher_latents and a.proper_flip, "--extra-pairs needs --teacher-latents --proper-flip"
+        X = torch.load(ROOT / a.extra_pairs)
+        dL_ = X["dL"]
+        sel = torch.arange(len(dL_)) if a.extra_no_filter else \
+            torch.nonzero(~torch.isnan(dL_) & (dL_ <= a.extra_skin_max) & (dL_ >= a.extra_skin_min)).flatten()
+        c = {"ids": c["ids"] + [X["ids"][i] for i in sel.tolist()], "key": c["key"] + [X["key"][i] for i in sel.tolist()],
+             "zi": torch.cat([c["zi"], X["zi"][sel].to(c["zi"].dtype)]), "zt": torch.cat([c["zt"], X["zt"][sel].to(c["zt"].dtype)]),
+             "img256": torch.cat([c["img256"], X["img256"][sel]]), "task": torch.cat([c["task"], X["task"][sel].to(c["task"].dtype)])}
+        FL = {"key": c["key"], "zi_f": torch.cat([FL["zi_f"], X["zi_f"][sel].to(FL["zi_f"].dtype)]),
+              "zt_f": torch.cat([FL["zt_f"], X["zt_f"][sel].to(FL["zt_f"].dtype)])}
+        n = len(c["task"])
+        print(f"[dl] extra real teacher pairs: {len(sel)}/{len(dL_)} kept ({'no filter' if a.extra_no_filter else f'skin dL* in [{a.extra_skin_min}, {a.extra_skin_max}]'}) -> {n} rows",
+              flush=True)
+        del X
     if a.tgt_cache:
         TG = np.load(ROOT / "data/pairs" / a.style / f"tgt512_dl_{st}.u8", mmap_mode="r")
         assert TG.shape[0] == n, f"tgt512 cache rows {TG.shape[0]} != {n}: rerun scripts/build_flip_cache.py"
@@ -517,6 +551,9 @@ def main():
             batch.flip = flip
         else:
             batch.flip = None
+        if a.teacher_latents:  # the teacher's image for exactly this (photo, flip): decode its latent
+            with torch.no_grad():
+                im = F.interpolate(DLA.decode(vae, zt.to(torch.bfloat16)).float().clamp(-1, 1), size=256, mode="area")
         return zi, zt, im, tk
 
     def losses(zi, zt, im, tk):
@@ -662,6 +699,15 @@ def main():
             print(json.dumps(r), flush=True)
             log.write(json.dumps(r) + "\n")
             log.flush()
+        if a.save_at and main0 and step in {int(x) for x in a.save_at.split(",") if x} and step != a.steps:
+            assert a.style_tokens == 0 and not a.style_film and not a.shared_trunk, "--save-at: plain recipe or LoRA pack only"
+            snap = ROOT / "weights/student" / f"{a.tag}_s{step}"
+            unet_raw.save_pretrained(snap / ("unet_lora" if a.lora_rank > 0 else "unet"))  # 2026-11-27: packs too
+            torch.save({"emb": emb.detach().cpu(), "mask": mask.cpu(), "tasks": tasks}, snap / "task_emb.pt")
+            (snap / "config.json").write_text(json.dumps(vars(a) | {"arch": "dreamlite", "init": a.init_from, "param": "flow_x0", "T": 1000,
+                                                                    "decoder": "DreamLite TinyVAE", "train_pairs": len(tr), "snapshot_step": step,
+                                                                    "minutes": round((time.time() - t0) / 60, 1)}, indent=1))
+            print(f"[dl] snapshot step {step} -> {snap}", flush=True)
         if ddp and step % 50 == 0 and (step % a.val_every == 0 or step == a.steps):
             dist.barrier()  # other ranks wait while rank 0 validates
         bad = torch.tensor(float(not math.isfinite(loss.item())), device=DEV)

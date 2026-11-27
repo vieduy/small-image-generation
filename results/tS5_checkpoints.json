@@ -1,0 +1,103 @@
+{
+ "teacher (img3 k1, 8 st)": {
+  "expr": {
+   "all": 0.7646,
+   "face_only": 0.8073,
+   "outside": 0.7361
+  },
+  "hands7": 0.768,
+  "props5": 0.692,
+  "ok": 0.8333,
+  "sleepy": 0.5833,
+  "night": 0.7917,
+  "likeness": 0.2245
+ },
+ "dl6g2": {
+  "expr": {
+   "all": 0.5896,
+   "face_only": 0.7344,
+   "outside": 0.4931
+  },
+  "hands7": 0.56,
+  "props5": 0.4,
+  "ok": 0.0833,
+  "sleepy": 0.0833,
+  "night": 0.0,
+  "likeness": 0.248,
+  "sticker_id_top5": 0.346
+ },
+ "tS4_s6000": {
+  "expr": {
+   "all": 0.6521,
+   "face_only": 0.7708,
+   "outside": 0.5729
+  },
+  "hands7": 0.679,
+  "props5": 0.425,
+  "ok": 0.5833,
+  "sleepy": 0.0417,
+  "night": 0.0,
+  "likeness": 0.2009,
+  "sticker_id_top5": 0.302
+ },
+ "tS4_s12000": {
+  "expr": {
+   "all": 0.7,
+   "face_only": 0.7865,
+   "outside": 0.6424
+  },
+  "hands7": 0.679,
+  "props5": 0.592,
+  "ok": 0.5417,
+  "sleepy": 0.0417,
+  "night": 0.6667,
+  "likeness": 0.2086,
+  "sticker_id_top5": 0.319
+ },
+ "tS4": {
+  "expr": {
+   "all": 0.6813,
+   "face_only": 0.7865,
+   "outside": 0.6111
+  },
+  "hands7": 0.655,
+  "props5": 0.55,
+  "ok": 0.4583,
+  "sleepy": 0.0417,
+  "night": 0.5417,
+  "likeness": 0.2136,
+  "sticker_id_top5": 0.304
+ },
+ "tS5_s6000": {
+  "expr": {
+   "all": 0.6542,
+   "face_only": 0.7812,
+   "outside": 0.5694
+  },
+  "hands7": 0.661,
+  "props5": 0.442,
+  "ok": 0.375,
+  "sleepy": 0.1667,
+  "night": 0.0,
+  "likeness": 0.2077,
+  "sticker_id_top5": 0.31,
+  "step": 6000,
+  "val_mse": 0.14175
+ },
+ "tS5": {
+  "expr": {
+   "all": 0.6687,
+   "face_only": 0.7865,
+   "outside": 0.5903
+  },
+  "hands7": 0.661,
+  "props5": 0.492,
+  "ok": 0.4583,
+  "sleepy": 0.0833,
+  "night": 0.4167,
+  "likeness": 0.2143,
+  "sticker_id_top5": 0.298,
+  "step": 12000,
+  "val_mse": 0.11813
+ }
+}

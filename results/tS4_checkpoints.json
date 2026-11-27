@@ -1,0 +1,121 @@
+{
+ "teacher (img3 k1, 8 st)": {
+  "expr": {
+   "all": 0.7646,
+   "face_only": 0.8073,
+   "outside": 0.7361
+  },
+  "hands7": 0.768,
+  "props5": 0.692,
+  "ok": 0.8333,
+  "sleepy": 0.5833,
+  "night": 0.7917,
+  "likeness": 0.2245
+ },
+ "dl6g2": {
+  "expr": {
+   "all": 0.5896,
+   "face_only": 0.7344,
+   "outside": 0.4931
+  },
+  "hands7": 0.56,
+  "props5": 0.4,
+  "ok": 0.0833,
+  "sleepy": 0.0833,
+  "night": 0.0,
+  "likeness": 0.248,
+  "sticker_id_top5": 0.346
+ },
+ "tS1": {
+  "expr": {
+   "all": 0.6375,
+   "face_only": 0.7969,
+   "outside": 0.5312
+  },
+  "hands7": 0.625,
+  "props5": 0.4,
+  "ok": 0.2083,
+  "sleepy": 0.0,
+  "night": 0.0,
+  "likeness": 0.3714,
+  "sticker_id_top5": 0.39
+ },
+ "tS3": {
+  "expr": {
+   "all": 0.6667,
+   "face_only": 0.8073,
+   "outside": 0.5729
+  },
+  "hands7": 0.649,
+  "props5": 0.467,
+  "ok": 0.1667,
+  "sleepy": 0.125,
+  "night": 0.0,
+  "likeness": 0.2059,
+  "sticker_id_top5": 0.256
+ },
+ "tS4_s2000": {
+  "expr": {
+   "all": 0.6188,
+   "face_only": 0.7812,
+   "outside": 0.5104
+  },
+  "hands7": 0.601,
+  "props5": 0.383,
+  "ok": 0.2083,
+  "sleepy": 0.0417,
+  "night": 0.0,
+  "likeness": 0.2131,
+  "sticker_id_top5": 0.273,
+  "step": 2000,
+  "val_mse": 0.17814
+ },
+ "tS4_s6000": {
+  "expr": {
+   "all": 0.6521,
+   "face_only": 0.7708,
+   "outside": 0.5729
+  },
+  "hands7": 0.679,
+  "props5": 0.425,
+  "ok": 0.5833,
+  "sleepy": 0.0417,
+  "night": 0.0,
+  "likeness": 0.2009,
+  "sticker_id_top5": 0.302,
+  "step": 6000,
+  "val_mse": 0.1486
+ },
+ "tS4_s12000": {
+  "expr": {
+   "all": 0.7,
+   "face_only": 0.7865,
+   "outside": 0.6424
+  },
+  "hands7": 0.679,
+  "props5": 0.592,
+  "ok": 0.5417,
+  "sleepy": 0.0417,
+  "night": 0.6667,
+  "likeness": 0.2086,
+  "sticker_id_top5": 0.319,
+  "step": 12000,
+  "val_mse": 0.12331
+ },
+ "tS4": {
+  "expr": {
+   "all": 0.6813,
+   "face_only": 0.7865,
+   "outside": 0.6111
+  },
+  "hands7": 0.655,
+  "props5": 0.55,
+  "ok": 0.4583,
+  "sleepy": 0.0417,
+  "night": 0.5417,
+  "likeness": 0.2136,
+  "sticker_id_top5": 0.304,
+  "step": 18000,
+  "val_mse": 0.11219
+ }
+}

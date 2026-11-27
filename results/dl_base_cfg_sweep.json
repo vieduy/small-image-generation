@@ -1,0 +1,80 @@
+{
+ "tune_faces": [
+  "fe2_000.png",
+  "fe2_039.png",
+  "fe2_079.png",
+  "fe2_119.png",
+  "fe2_159.png",
+  "fe2_199.png",
+  "fe2_239.png",
+  "fe2_279.png"
+ ],
+ "test_faces": [
+  "fe2_019.png",
+  "fe2_059.png",
+  "fe2_099.png",
+  "fe2_139.png",
+  "fe2_179.png",
+  "fe2_219.png",
+  "fe2_259.png",
+  "fe2_299.png"
+ ],
+ "tune": {
+  "img1.5_txt3.5": {
+   "id_cos": 0.0752,
+   "id_n": 8,
+   "skin_dL": 15.5,
+   "cartoon_rate": 1.0
+  },
+  "img1.5_txt2.0": {
+   "id_cos": 0.1548,
+   "id_n": 8,
+   "skin_dL": 19.4,
+   "cartoon_rate": 1.0
+  },
+  "img2.5_txt3.5": {
+   "id_cos": 0.1735,
+   "id_n": 7,
+   "skin_dL": 19.6,
+   "cartoon_rate": 1.0
+  },
+  "img2.5_txt2.0": {
+   "id_cos": 0.2399,
+   "id_n": 8,
+   "skin_dL": 23.1,
+   "cartoon_rate": 1.0
+  },
+  "img4.0_txt3.5": {
+   "id_cos": 0.2701,
+   "id_n": 6,
+   "skin_dL": 19.0,
+   "cartoon_rate": 1.0
+  },
+  "img4.0_txt2.0": {
+   "id_cos": 0.3094,
+   "id_n": 5,
+   "skin_dL": 15.3,
+   "cartoon_rate": 1.0
+  },
+  "mobile": {
+   "id_cos": 0.1975,
+   "id_n": 8,
+   "skin_dL": 11.4,
+   "cartoon_rate": 1.0
+  }
+ },
+ "best_base_setting": "img4.0_txt2.0",
+ "test_base_best": {
+  "id_cos": 0.3381,
+  "id_n": 6,
+  "skin_dL": 17.5,
+  "cartoon_rate": 1.0
+ },
+ "test_mobile": {
+  "id_cos": 0.2836,
+  "id_n": 8,
+  "skin_dL": 15.1,
+  "cartoon_rate": 1.0
+ },
+ "minutes": 2.3
+}

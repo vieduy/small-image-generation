@@ -1,0 +1,69 @@
+{
+ "grid": {
+  "img1.5_txt1.5": {
+   "expr_all": 0.7063,
+   "outside": 0.6562,
+   "likeness": 0.3147,
+   "n_face": 20,
+   "skin_dL": 8.6
+  },
+  "img1.5_txt2.5": {
+   "expr_all": 0.775,
+   "outside": 0.7292,
+   "likeness": 0.3044,
+   "n_face": 20,
+   "skin_dL": 9.2
+  },
+  "img1.5_txt4.0": {
+   "expr_all": 0.7562,
+   "outside": 0.6875,
+   "likeness": 0.2931,
+   "n_face": 20,
+   "skin_dL": 9.6
+  },
+  "img2.0_txt1.5": {
+   "expr_all": 0.7,
+   "outside": 0.6667,
+   "likeness": 0.3759,
+   "n_face": 20,
+   "skin_dL": 9.4
+  },
+  "img2.0_txt2.5": {
+   "expr_all": 0.7438,
+   "outside": 0.6875,
+   "likeness": 0.3653,
+   "n_face": 20,
+   "skin_dL": 9.6
+  },
+  "img2.0_txt4.0": {
+   "expr_all": 0.7438,
+   "outside": 0.7188,
+   "likeness": 0.3469,
+   "n_face": 20,
+   "skin_dL": 10.2
+  },
+  "img3.0_txt1.5": {
+   "expr_all": 0.6312,
+   "outside": 0.6042,
+   "likeness": 0.4304,
+   "n_face": 20,
+   "skin_dL": 10.2
+  },
+  "img3.0_txt2.5": {
+   "expr_all": 0.6875,
+   "outside": 0.6354,
+   "likeness": 0.4315,
+   "n_face": 20,
+   "skin_dL": 10.8
+  },
+  "img3.0_txt4.0": {
+   "expr_all": 0.7125,
+   "outside": 0.6875,
+   "likeness": 0.4225,
+   "n_face": 20,
+   "skin_dL": 11.0
+  }
+ },
+ "pick": "img3.0_txt4.0",
+ "rule": "max expr_all + likeness, >=80% faces detected"
+}

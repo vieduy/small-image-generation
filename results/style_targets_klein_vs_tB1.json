@@ -1,0 +1,26 @@
+{
+ "synthetic_cfr": {
+  "n": 370,
+  "klein_style_clip": 0.771,
+  "teacher_style_clip": 0.667,
+  "klein_style_dino": 0.607,
+  "teacher_style_dino": 0.51,
+  "teacher_lower_clip_frac": 0.93
+ },
+ "ffhq_q": {
+  "n": 230,
+  "klein_style_clip": 0.799,
+  "teacher_style_clip": 0.776,
+  "klein_style_dino": 0.744,
+  "teacher_style_dino": 0.739,
+  "teacher_lower_clip_frac": 0.761
+ },
+ "all": {
+  "n": 600,
+  "klein_style_clip": 0.782,
+  "teacher_style_clip": 0.709,
+  "klein_style_dino": 0.659,
+  "teacher_style_dino": 0.598,
+  "teacher_lower_clip_frac": 0.865
+ }
+}

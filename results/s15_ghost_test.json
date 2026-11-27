@@ -1,0 +1,100 @@
+{
+ "n_cases": 400,
+ "teacher": {
+  "base_sides": {
+   "-": 9,
+   "L": 131,
+   "LR": 100,
+   "R": 160
+  },
+  "unstable_rate": 0.432,
+  "n": 400,
+  "mirror_follows_face": 0.458
+ },
+ "students": {
+  "dl6g2": {
+   "base_sides": {
+    "-": 27,
+    "L": 212,
+    "LR": 117,
+    "R": 44
+   },
+   "ghost_rate": 0.292,
+   "ghost_rate_teacher_unstable": 0.289,
+   "ghost_rate_teacher_stable": 0.295,
+   "table_unstable_stable_x_ghost_noghost": [
+    [
+     50,
+     123
+    ],
+    [
+     67,
+     160
+    ]
+   ],
+   "student_unstable_rate": 0.35
+  },
+  "tS4": {
+   "base_sides": {
+    "-": 8,
+    "L": 119,
+    "LR": 118,
+    "R": 155
+   },
+   "ghost_rate": 0.295,
+   "ghost_rate_teacher_unstable": 0.341,
+   "ghost_rate_teacher_stable": 0.26,
+   "table_unstable_stable_x_ghost_noghost": [
+    [
+     59,
+     114
+    ],
+    [
+     59,
+     168
+    ]
+   ],
+   "student_unstable_rate": 0.378
+  },
+  "tS4o": {
+   "base_sides": {
+    "-": 14,
+    "L": 120,
+    "LR": 117,
+    "R": 149
+   },
+   "ghost_rate": 0.292,
+   "ghost_rate_teacher_unstable": 0.335,
+   "ghost_rate_teacher_stable": 0.26,
+   "table_unstable_stable_x_ghost_noghost": [
+    [
+     58,
+     115
+    ],
+    [
+     59,
+     168
+    ]
+   ],
+   "student_unstable_rate": 0.398
+  }
+ },
+ "pooled_tS4_tS4o": {
+  "table": [
+   [
+    117,
+    229
+   ],
+   [
+    118,
+    336
+   ]
+  ],
+  "ghost_unstable": 0.338,
+  "ghost_stable": 0.26,
+  "ratio": 1.3,
+  "fisher_p": 0.0187,
+  "verdict": "REJECTED"
+ },
+ "minutes": 17.2
+}

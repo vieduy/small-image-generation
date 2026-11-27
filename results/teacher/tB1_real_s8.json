@@ -1,0 +1,15 @@
+{
+ "teacher": "tB1",
+ "steps": 8,
+ "g_img": 3.0,
+ "g_txt": 4.0,
+ "set": "data/real_p2a/eval[:300]",
+ "avatar_likeness": 0.2072,
+ "n": 300,
+ "skin_dL_median": 18.4,
+ "skin_dL_dark25_median": 32.2,
+ "reference": {
+  "klein_personal": 0.208,
+  "dl6g2_decg2": 0.164
+ }
+}

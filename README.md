@@ -1442,3 +1442,390 @@ Val MSE / LPIPS 0.509 / 0.2036 (dl8 0.514 / 0.2030). expr_eval all / face-only /
   .42 (.38), thumbs .75 (.63); **love 0.00 (pack 0.42)** = hearts too small/faint; sleepy/night 0.00 for the pack too.
 - Open: comic sharpness 0.70 (dec8 was trained on dl8 latents; decCm gives 0.78 on dl9); cartoon3d outside dipped vs dl8 (0.451 vs
   0.476, the price of the comic emphasis). Sheet: grids/dl9_dec8_3styles.jpg.
+
+### 2026-11-22 — FINAL: reports/FINAL_2026-11-22.md (what to ship, numbers, dropped ideas, open issues, paths). Commit 5b2d6c5 pushed.
+
+### 2026-11-23 ~02:25 UTC — dev-duyhv re-registered (user: "submit dev-duyhv to register h200 gpu")
+- h200-120-fleet 7/8 busy -> **dev-duyhv with 1x H200 NVL** there (`dstack/dev_env_120_1g.yaml`); `dstack attach` + `ssh dev-duyhv` work, shared volume mounted.
+- h200-gpu-fleet shows 0/8 busy but its host gpu-h200-123 is still hung (not rebooted, load ~12,700): not used; needs a fleet admin.
+
+### 2026-11-23 — DreamLite-base (28-step, undistilled) checked (user: plan to fine-tune it and distill to 1 step)
+- `carlofkl/DreamLite-base@diffusers`: public, not gated, CC BY-NC 4.0 (same as mobile). Text encoder, VAE, scheduler and UNet
+  config are byte-identical to DreamLite-mobile; only the UNet weights differ (mean relative weight diff 3.3%, max 21%) -> mobile is
+  a short DMD2 distillation of base. Downloaded only the base UNet (744 MB) into hf_cache.
+- `scripts/dl_base_check.py` (dev-duyhv H200) -> grids/dl_base_vs_mobile.jpg, results/dl_base_check.json: out of the box, base
+  28 steps (CFG + image-CFG) at 1024 gives a clean 3D cartoon but lightens dark skin strongly and drops age/beard; at 512 both
+  base and mobile break (zoomed crops; both are 1024-native). Base 4.1 s at 1024 / 2.1 s at 512 per image on H200.
+- Plan proposed (not started): (1) fine-tune base at 512 on klein pairs with option tokens, (2) gate: 28-step teacher must beat
+  dl6g2, (3) teacher pairs from the phone's fixed noise, (4) distill into the 1-step student.
+- **Fair CFG sweep (user: "run the sweep")**, `scripts/dl_base_cfg_sweep.py` -> results/dl_base_cfg_sweep.json,
+  grids/dl_base_cfg_sweep_test.jpg. 1024 px, tune 8 faces / test 8 other faces (faces_eval2), SFace likeness, skin dL*.
+  Base likeness on tune faces: img/txt CFG 1.5/3.5 (default) 0.075, 1.5/2 0.155, 2.5/3.5 0.174, 2.5/2 0.240, 4/3.5 0.270,
+  4/2 0.309; mobile 0.198. Test: base 4/2 0.338 (6/8 faces detected) vs mobile 0.284 (8/8).
+  Visual: base at 4/2 keeps beard/age/glasses but is broken by over-guidance (oversaturated, posterized, blocky neon background,
+  flat-vector look); mobile is clean 3D but generic (young, beards/age removed). Base lightens skin more at every setting
+  (+15..+23 vs +11). Reading: the earlier default-setting comparison was unfair (likeness 0.075..0.31 from the knobs alone);
+  out of the box neither is a usable teacher -> decided only by the stage-2 gate after fine-tuning at 512 (train with condition
+  dropout so CFG stays usable; moderate CFG ~2-2.5 image).
+
+### 2026-11-23 — Stage 1 teacher tB1 (DreamLite-base fine-tuned on klein cartoon3d pairs) running; first checkpoint
+- Code: `scripts/teacher_dl.py` (DreamLite edit conventions, 28-step 3-pass CFG sampler, null tokens), `scripts/train_teacher_dl.py`,
+  `scripts/teacher_eval.py` (eval_e1 metrics/faces), `scripts/s1_teacher.sh`. Sampler verified vs the official DreamLitePipeline:
+  final latent max diff 0.0 (`scripts/teacher_sampler_check.py`). Smoke test passed.
+- tB1: from carlofkl/DreamLite-base, velocity MSE, condition dropout 5/5/5%, lr 1e-5, tokens 1e-3, bs 32, EMA 0.999, 20000 steps
+  (not curve-based), dev-duyhv 1x H200, 0.63 s/step (~3.5 h, ETA ~06:55 UTC). Same 53,786 train pairs as dl6g2.
+- **Step 2500 (EMA, CFG img 2 / txt 2, 28 steps, untuned)** vs dl6g2 (results/e1/dl6g2.json, same code/faces):
+  expr all 0.663 (dl6g2 0.590) | face-only 0.734 (0.734) | **outside 0.615 (0.493)** | **avatar likeness 0.402 (0.248)**;
+  avatar skin dL* median +12.5. Visual (grids/teacher/tB1_step_02500_expr.jpg): proper 3D cartoon stickers; age, beards, grey
+  hair, hijab and dark skin kept; hearts / Zzz / moon / party hat drawn clearly (the 1-step students' weak spots). A few
+  expressions shift skin tone or clothes colour. Stage-2 gate (beat dl6g2) already met at 2.5k steps; CFG sweep on the final.
+- 2026-11-23: carlofkl/DreamLite-base (diffusers branch) found already in hf_cache (4.8 GB incl. text encoder, fetched earlier by another process; UNet 780 MB differs from mobile; VAE/text encoder/configs identical to DreamLite-mobile, checked by file hash). CC BY-NC 4.0. 28-step flow matching, 3-branch dual CFG.
+
+### 2026-11-23 ~09:30 UTC — Stage 2 for teacher tB1 (user: "do it")
+- Found that a parallel session had already done stages 0-1 (DreamLite-base check, CFG sweep, tB1 fine-tune 20k steps on cartoon3d,
+  done 06:56 UTC; val v-MSE 0.630 -> 0.321 @5k -> 0.312 @10k -> 0.308 @20k). I had started a duplicate trainer/sampler; removed
+  (scripts/train_teacher.py deleted, dl_arch.py restored) to keep one implementation (scripts/train_teacher_dl.py, teacher_dl.py).
+- Only tB1 step 2500 had been evaluated. Launched `scripts/s2_teacher.sh` on dev-duyhv: teacher_eval.py --sweep on the final
+  (3x3 img/txt CFG grid on tune faces; full 28-step eval at the pick), then the pick at 12 and 8 steps, and 28 steps without
+  guidance (1/1) -> cheapest setting for the stage-3 pairs. Logs logs/s2_teacher/.
+- Fixed teacher_eval.py --sweep: tuning avatars were data/faces_eval2[300:324] (empty: the folder has 300) -> data/faces[100:120] (20 faces outside every eval set). Stage 2 relaunched.
+
+### 2026-11-23 ~13:30 UTC — Stage 2 results (tB1 final) + Stage 3 launched
+- Stage 2 had finished at 09:59 UTC (scripts/s2_teacher.sh); stage 3 was NOT auto-started (my miss) -> started 13:25 UTC.
+- Sweep (tune faces, 28 steps; img/txt CFG): likeness rises with image CFG (1.5: ~0.30, 2: ~0.36, 3: ~0.43), expressions best at
+  img 1.5 / txt 2.5 (0.775). Pick (max expr + likeness): **img 3 / txt 4**.
+- Full eval (eval_e1 faces/metrics; avatar likeness on 400 v2 faces), vs dl6g2 0.590 / 0.734 / 0.493, likeness 0.248, skin dL ~+17 (v2):
+  | tB1 setting | UNet passes | expr all / face / outside | likeness | skin dL* |
+  |---|---|---|---|---|
+  | 28 steps, CFG 3/4 | 84 | 0.738 / 0.792 / 0.701 | 0.381 | 8.6 |
+  | 12 steps, CFG 3/4 | 36 | 0.723 / 0.776 / 0.688 | 0.382 | 9.0 |
+  | **8 steps, CFG 3/4** | **24** | **0.727 / 0.771 / 0.698** | **0.375** | 9.6 |
+  | 28 steps, no CFG | 28 | 0.658 / 0.688 / 0.639 | 0.230 | 8.4 |
+  -> 8 steps keeps 28-step quality at 29% of the cost; CFG matters a lot for likeness. Note: the 12/8-step and no-CFG runs all
+  wrote results/teacher/tB1_final.json (name has no step count; the file now holds the no-CFG run); numbers above from
+  logs/s2_teacher/eval_*.log. teacher_eval.py sampled with random noise per batch (not the phone's fixed noise).
+- Stage 3 `scripts/s3_teacher_pairs.py` / `s3_teacher.sh` (dev-duyhv): tB1, 8 steps, CFG 3/4, from the phone's fixed noise
+  (seed 1234), on the cached photo latents of all 53,930 cartoon3d rows, plain + flipped photo -> data/pairs/cartoon3d/
+  teacher_tB1_s8.pt (same keys/order as the student caches). Smoke OK (grids/s3_smoke_teacher_pairs.jpg: photo / teacher /
+  klein / teacher-on-flipped; teacher keeps curls, wrinkles, glasses, beards better than klein). ~8 pairs/s -> ~3.7 h.
+
+### 2026-11-25 ~02:50 UTC — Stage 4 launched (dev-duyhv idle since stage 3 ended 11-23 16:32 UTC: stage 4 had not been written)
+- Stage 3 done 11-23 16:32 UTC: data/pairs/cartoon3d/teacher_tB1_s8.pt (53,930 rows x plain + flipped photo, 186.8 min).
+- train_dl.py `--teacher-latents`: replaces klein's target latents (plain + flipped) with the teacher's; the 256 / 512 px pixel
+  targets are the TinyVAE decode of the same latent (flipped teacher outputs are not mirrors of the plain ones). Eye-loss face
+  boxes still come from the klein 256 px targets (same photo, close position; not re-detected).
+- **tS1** = dl6g2 -> 6000 steps, lr 2e-5 on teacher pairs only, otherwise the dlB recipe (steps/lr copied from dlB, unverified);
+  0.59 s/step (~1 h). Then eval_e1 (expr all/face/outside + likeness), expr_eval + sharp_ratio, v2/real/selfie quality, real-set skin.
+  `scripts/s4_student.sh`, logs/s4/. Teacher feature matching = next run if tS1 helps.
+
+### 2026-11-25 ~04:10 UTC — tS1 results (1-step student distilled from teacher tB1's fixed-noise pairs)
+| metric (cartoon3d) | dl6g2 + decg2 (shipped) | **tS1 + decg2** | teacher tB1 (8 steps, CFG 3/4) | klein |
+|---|---|---|---|---|
+| expr all / face-only / outside (eval_e1) | 0.590 / 0.734 / 0.493 | **0.638 / 0.797 / 0.531** | 0.727 / 0.771 / 0.698 | – |
+| sticker id top-5 (expr_eval) | 0.346 | **0.390** | – | – |
+| avatar likeness v2 / real / selfie | .248 / .164 / .179 | **.371 / .197 / .263** | .375 / **.207** / – | .341 / .208 / – |
+| sticker likeness v2 / real / selfie | .221 / .172 / .183 | **.270 / .196 / .220** | – | .356 / .238 / – |
+| sharpness vs klein (sharp_ratio mean of 10) | 0.64 | **0.89** | – | 1.0 |
+| real skin dL* median / dark-25% | +17.3 / +32.5 | +18.6 / +31.8 | **+18.4 / +32.2** | +9.0 / +6.7 |
+- **tS1 beats dl6g2 on every quality metric** (likeness +50% synthetic, +20% real, +47% selfie; sharpness 0.64 -> 0.89; outside
+  +0.04, within CI [0.48, 0.58]); same phone cost. It keeps ~99% of the teacher's synthetic likeness and ~95% on real photos.
+- **Teacher on real photos (scripts/teacher_real.py):** likeness 0.207 = klein, and it lightens dark skin as much as the students
+  (+32 on the darkest 25%). Its "+9.6" skin number was on synthetic faces only. -> dark-skin lightening on real photos is in
+  the teacher (and klein-derived data), not caused by the 1-step student.
+- Gaps: outside-face gestures 0.531 vs teacher 0.698; real-photo likeness 0.197 vs synthetic 0.371 (domain); real dark skin.
+- 2026-11-25 ~09:08 UTC: gpu-h200-123 (h200-gpu-fleet) had been rebooted (~08:00 UTC; load 0, no D-state). dev-duyhv-2 re-submitted (dstack/dev_env_2.yaml, 2x H200NVL), running, SSH via dstack attach works again.
+
+### 2026-11-25 ~09:30 UTC — #2: teacher pairs on real photos (user: "do 2 first, use 2 idle gpu"), dev-duyhv-2
+- `scripts/s5_real_pairs.py` (+ `_mt.py`, the same with threaded face/skin scoring: GPUs were idle while scoring): tB1, 8 steps,
+  CFG 3/4, phone fixed noise, plain + flipped photo, on 29,482 real photos = data/ffhq_norm minus 4,825 captioned children
+  (+ data/real_p2a/train, CelebA-derived, identity-disjoint from the real eval set); per photo avatar + 1 random other option ->
+  58,964 rows; skin dL* and SFace cos scored on every plain output. ~4.2 rows/s per GPU -> ~1.9 h. Merge -> data/pairs/real_teacher/
+  teacher_tB1_real.pt (+ .json: skin dL* per input-skin quartile and keep rates at dL <= 5/10/15).
+- train_dl.py `--extra-pairs` (+ `--extra-skin-max/min`) appends those rows (teacher mode, proper flip). Smoke OK (scripts/s5_chain.sh).
+- **Stopped before training (s5_chain.sh killed after the smoke; s5b_merge.sh only merges):** in the 96-row smoke the teacher's real-photo
+  outputs have median skin dL* +18.6; dL <= 10 keeps 17% overall and only **4% of the darkest-skin quartile** -> a plain skin filter
+  would remove almost all dark-skinned real faces. The training filter is decided on the full statistics.
+- 2026-11-25 (user: 'remove the skin filter pls'; the s5 skin sheet grids/s5_skin_filter_sheet.jpg showed raw dL* on real photos mostly measures photo lighting): train_dl.py --extra-no-filter; scripts/s5c_train.sh queued on dev-duyhv-2: after the merge, tS2 = tS1 recipe + all 58,964 real teacher pairs, DDP 2 GPUs, 6000 steps, then the tS1 eval set.
+- **R1 + R3 filter on the stage-3 synthetic teacher pairs (user: "yes apply R1 + R3 to tS2")**, `scripts/s3_filter_all.py` (examples:
+  scripts/s3_filter_examples.py -> grids/s3_filter_examples.jpg, 600-row sample R1 74.8 / R2 100 / R3 84.2 / R4 92.7%; R2 removes
+  nothing, R4 failures were mostly CLIP errors -> not used). Full 53,930 rows (5.5 min, dev-duyhv): **R1 identity 78.0%, R3 skin
+  chroma 86.3%, kept 66.8%** (avatar 69.4, sticker 68.4, expressions 64.9; lowest facepalm 59.1, shrug 59.9, night 60.0).
+  Drop list data/pairs/cartoon3d/teacher_tB1_s8_drop.json (17,880 rows) -> `scripts/s5d_train.sh` (replaces s5c): tS2 = tS1 recipe
+  + drop list + all real teacher pairs; validation rows unchanged.
+- **~11:37 UTC tS2 2-GPU DDP start failed on dev-duyhv-2** (both ranks: "DDP expects same model across all ranks ... rank 0 has
+  inconsistent 0 params" in DDP's param verification, rank 0 before rank 1 had finished loading = same error as dl9's first try on
+  11-21). Both processes then hung in do_exit inside the driver (unkillable, kill -9 has no effect); dev-duyhv-2 GPUs 0/1 report
+  utilization [N/A] -> unusable until the host / GPUs are reset. Host gpu-h200-123 itself: no D-state processes.
+  Root cause of the DDP verification failure not found yet (dl8's DDP run with the same trainer worked on 11-21).
+- **12:34 UTC tS2 restarted single-GPU on dev-duyhv** (`scripts/s5e_train_1gpu.sh`, otherwise = s5d): 112,894 rows, drop list removes
+  17,851 training pairs (29 listed rows are validation rows, kept) -> **94,899 training pairs**, val 144 (= tS1's).
+- **~12:45-12:52 UTC dev-duyhv-2 stop + resubmit (user: "yes try stop and resubmit"):** stopping the run did NOT free GPUs 0/1 on
+  gpu-h200-123 (still 2.8 GB used, utilization [N/A]). Resubmitted run started, but a GPU test + nvidia-smi calls then hung; the host
+  now has `nvidia-smi` processes piling up in D state (22 at 12:51 UTC) = the driver hang of 11-21 again. dev-duyhv-2 stopped
+  again; no more GPU queries sent to that host. Needs a fleet admin (GPU reset / reboot of gpu-h200-123). tS2 continues on
+  dev-duyhv (h200-120-fleet, other host).
+- **13:00 UTC re-check (user asked again to stop + resubmit; not resubmitted):** read-only ps on gpu-h200-123: 74 `nvidia-smi`
+  in D state (load 72), spawned every ~10 s by another run's dstack-runner GPU poll; the two old tS2 DDP ranks (pids 80733/80734,
+  root, from 11:32 UTC) are still alive in the driver. A new run would hang the same way, so no resubmit until a fleet admin
+  resets the GPUs / reboots the host.
+
+### 2026-11-25 14:45 UTC — tS2 results (tS1 recipe + 58,964 real-photo teacher pairs, no skin filter; synthetic teacher pairs R1+R3-filtered)
+Single GPU on dev-duyhv, bs 16, 6000 steps, 13:40 UTC train done, evals 13:55. Val MSE 0.193 at 6000 (still falling slowly).
+| | dl6g2 | tS1 | tS2 |
+|---|---|---|---|
+| expr all / face / outside | 0.590 / 0.734 / 0.493 | 0.638 / 0.797 / 0.531 | 0.610 / 0.755 / 0.514 |
+| likeness v2 / real / selfie | .248 / .164 / .179 | .371 / .197 / .263 | .372 / .195 / .261 |
+| sticker id top-5 | 0.346 | 0.390 | 0.392 |
+| sharpness (mean) | 0.64 | 0.89 | 0.88 |
+| real skin dL median / dark25 | +17.3 / +32.5 | +18.6 / +31.8 | +18.4 / +31.8 |
+Verdict (proposed): tS2 = tS1 within noise (expr CIs overlap: tS2 all [0.577, 0.646] vs tS1 [0.608, 0.665]); real-photo pairs did NOT
+raise real-photo likeness. Likely cause: the teacher itself is only .207 on real photos (tB1_real_s8), so the student (.195) is
+already ~at the teacher's ceiling; more pairs from the same teacher can't add likeness. tS1 stays the best cartoon3d student.
+Visual check (scripts/s5_visual_tS2.py -> grids/tS2_compare_{real,v2,expr}.jpg, from existing eval outputs): tS2 ~ identical to tS1
+everywhere. Real photos: teacher/tS1/tS2 render a generic young face (bald / grey / older men get full dark hair; dl6g2 kept grey
+hair in one case). Synthetic faces: tS1/tS2 are more detailed but show blotchy skin spots, stray hair strands and a less 3D,
+more "photo filter" look than dl6g2 -> part of the 0.89 sharpness may be this noise; needs a look before calling tS1 shippable.
+- **Why tS1/tS2 are less cartoon3d (scripts/s5_style_targets.py -> results/style_targets_klein_vs_tB1.json, grids/style_targets_klein_vs_tB1.jpg):**
+  student eval style_clip v2 avatars: dl6g2 0.756, tS1 0.630, tS2 0.627 (real: 0.837 / 0.802 / 0.804) - missed in the earlier tables.
+  The TRAINING TARGETS already differ: 600 random avatar rows, klein target vs teacher tB1 target, same TinyVAE decode:
+  synthetic photos style_clip 0.771 -> 0.667 (teacher lower on 93% of rows), FFHQ 0.799 -> 0.776 (76%). Teacher outputs keep photo
+  texture (wrinkles, pores, patterned clothes, noisy backgrounds) = half-cartoon. Likely cause (not proven): stage-2 picked CFG img 3 /
+  txt 4 on expr + SFace likeness only; the sweep (results/teacher/tB1_final_sweep.json) shows likeness rising with image guidance
+  (img 1.5 ~0.30, 2.0 ~0.36, 3.0 ~0.43), i.e. more photo-like = higher SFace score; style was not measured in the sweep.
+- **14:5x UTC step 1 started (user "yes do step 1"): scripts/s6_cfg_style_sweep.py on dev-duyhv** - teacher tB1 CFG re-sweep at the
+  pair setting (8 steps, fixed phone noise), g_img {1,1.5,2,2.5,3} x g_txt {1.5,2.5,4}, now scoring style (style_clip / dino vs
+  styles/cartoon3d refs) on 100 synthetic + 50 FFHQ training avatars, plus likeness, skin dL*, expressions (8 tune faces x 20).
+  Pick rule fixed in advance: synthetic style_clip >= klein - 0.01 (klein = 0.774 on these rows), then max expr + likeness.
+  Log logs/s6/cfg_style_sweep.log; out results/teacher/tB1_cfg_style_sweep.json, grids/teacher/tB1_cfg_style_sweep.jpg.
+- **15:05 UTC step 1 result (results/teacher/tB1_cfg_style_sweep.json, grids/teacher/tB1_cfg_style_sweep.jpg; 10 min, 0 errors):**
+  style falls and SFace likeness rises monotonically with image guidance (txt 2.5): img 1.0 style 0.774 / likeness 0.253,
+  1.5 0.748 / 0.307, 2.0 0.716 / 0.345, 2.5 0.689 / 0.365, 3.0 0.670 / 0.373 (klein targets 0.774). Current pairs (img3/txt4):
+  style 0.669, likeness 0.372, expr 0.750. Rule pick: **img1.0_txt2.5** = klein style, expr 0.794 / outside 0.750 (8 tune faces,
+  +-~0.06), likeness 0.253 (~ dl6g2's 0.248 on eval). => the teacher's likeness gain over klein came with photo texture; at
+  klein-level style the teacher has ~klein likeness. Skin dL* also lowest at img 1.0 (+12.2 vs +14.5). Step 2 waits for user go.
+- **16:15 UTC step 2 started (user "yes do step 2 with rule pick"): scripts/s6_chain.sh on dev-duyhv** (log logs/s6_chain.out, logs/s6/).
+  a) teacher eval at img 1.0 / txt 2.5, 8 steps (teacher_eval.py now names explicit-CFG runs <tag>_<ckpt>_img<g>_txt<g>_s<steps>
+  so tB1_final.json is not overwritten), gate expr_all >= 0.70; b) 53,930 synthetic pairs -> teacher_tB1_s8_img1.pt
+  (s3_teacher_pairs.py got --name; old teacher_tB1_s8 kept); c) tS3 = tS1 recipe with only the teacher setting changed, + tS1 evals.
+  ETA: gate ~16:30, pairs ~19:40, train ~20:50, evals ~21:05 UTC.
+- **16:18 UTC gate passed:** teacher at img 1.0 / txt 2.5, 8 steps: expr 0.752 / face 0.813 / outside 0.712 (CI all [0.698, 0.802];
+  img3/txt4 8-step was 0.727 / - / 0.698), v2 likeness 0.225 (was 0.375), skin dL* +8.6 -> pair generation running.
+- 16:18 UTC dev-duyhv-2 re-submitted (user), running on 2 new GPUs of gpu-h200-123; NOT tested (host driver hung: 1,260 nvidia-smi in
+  D state). Two old dev-duyhv-2 containers (09:07, 12:48) still exist on the host holding 4 GPUs. User: "ignore dev-duyhv-2, just focus
+  the training flow" -> not used.
+
+### 2026-11-25 20:47 UTC — tS3 results (tS1 recipe, teacher pairs at CFG img 1.0 / txt 2.5 = rule pick; chain s6_chain.sh, 0 errors)
+Pairs 16:18-19:25 (teacher_tB1_s8_img1.pt), train 19:28-20:31 (val MSE 0.188 -> 0.134, still falling at 6000), evals to 20:47.
+| | dl6g2 | tS1 (img3/txt4) | tS3 (img1/txt2.5) |
+|---|---|---|---|
+| expr all / face / outside | 0.590 / 0.734 / 0.493 | 0.638 / 0.797 / 0.531 | **0.667 / 0.807 / 0.573** (CI all [0.635, 0.700]) |
+| style_clip avatar v2 / real / selfie | 0.756 / 0.837 / 0.815 | 0.630 / 0.802 / 0.744 | **0.769 / 0.839 / 0.816** |
+| style_clip sticker v2 | 0.705 | 0.650 | 0.705 |
+| likeness v2 / real / selfie | .248 / .164 / .179 | .371 / .197 / .263 | .206 / .153 / .169 |
+| sticker id top-5 | 0.346 | 0.390 | **0.256** |
+| sharpness | 0.64 | 0.89 | 0.62 |
+| real skin dL median / dark25 | +17.3 / +32.5 | +18.6 / +31.8 | +18.0 / +31.8 |
+(klein_personal: v2 likeness 0.341 / style 0.716; real 0.208 / 0.793.)
+Visual (grids/tS3_compare_{v2,real,expr}.jpg via scripts/s5_visual_tS2.py dl6g2 tS1 tS3): clean 3D, no skin blotches / stray strands;
+but attributes drift: face_002's black braids -> grey in all 9 expression stickers, face_086 black curly -> brown, wrinkles/age
+smoothed away. Verdict (proposed): fixes style, best expressions, but loses identity (sticker id 0.256 vs dl6g2 0.346) -> not shippable.
+Image guidance trades style for attribute fidelity at every setting; next idea (not approved): guidance interval (high image
+guidance only on early/high-noise steps for colours + layout, low on late steps where photo texture comes in).
+
+### 2026-11-26 — Stage-2 (teacher guidance) deep dive (user: "deep dive into choosing the teacher setting")
+Controlled comparison on 239 random synthetic avatar training rows: teacher pairs at img 3 / txt 4 (teacher_tB1_s8.pt, tS1) vs
+img 1 / txt 2.5 (teacher_tB1_s8_img1.pt, tS3), same photo + fixed noise + 8 steps; SFace cos to the photo; "tex" = mean |Laplacian|
+of the central face box at 256 px (CPU, scratchpad script s2_pairs.py). Sheet: grids/teacher/stage2_guidance_examples.jpg.
+| | photo | klein target | teacher img 3 | teacher img 1 |
+|---|---|---|---|---|
+| SFace likeness (mean) | - | 0.320 | 0.374 | 0.257 |
+| face fine-detail "tex" (mean) | 15.7 | 14.8 | **24.7** | 13.4 |
+img 3 > img 1 in likeness on 93% of rows and in tex on 100%. img 3 has ~1.6x MORE fine detail than the photo itself = guidance
+overshoot (wrinkles, age spots, sketch strokes, orange posterised skin), not photo copying. img 1 sits below klein's likeness:
+the teacher's unguided prediction is a smoothed / younger / klein-like face. In the examples, img 3 also corrects klein errors
+(cap colour, a dark-skinned woman lightened by klein and by img 1). Stage-2 pick rule (expr + SFace likeness) favoured the
+overshoot because SFace (photo face recogniser) rewards photo-like detail; style was not scored.
+Proposed (not approved): guidance-interval (img guidance only on early steps) and APG sweep with a pick rule that bounds tex by
+the photo/klein level and style >= klein - 0.01.
+- **2026-11-26 ~03:00 UTC sweep launched (user "yes run the sweep on dev-duyhv"): `scripts/s7_guidance_sweep.py`** (copy of s6 + new sampler
+  `sample_gs`: img guidance only on the first k of 8 steps, optional APG projection; equals TD.sample exactly with k=8 / no APG, max diff 0.0).
+  18 settings: baselines img1 / img3 / img3_txt4; interval g {2,3,4} x k {2,3,4,5}; APG g 3, 5 (all steps), g 4 (k 4). Pick rule fixed in
+  the docstring: style >= klein - 0.01, tex <= 1.10 x klein, then max expr + likeness. Log logs/s7/guidance_sweep.log; out
+  results/teacher/tB1_guidance_sweep.json, grids/teacher/tB1_guidance_sweep.jpg. dev-duyhv-2 not used (gpu-h200-123 driver hung, 8,844 D-state).
+- **2026-11-26 why tS1 is clean on some inputs and over-detailed on others (user question; CPU, existing outputs):** face fine-detail
+  "tex" (mean |Laplacian|, central face box, 256 px). Teacher img3 pairs (239 synthetic training avatars): overshoot vs klein by photo pool:
+  f (synthetic portraits, 61% of synthetic avatar rows) x1.93, c (phone-style selfies, noisy) x1.34, r (CelebA-derived, low-res) x1.10;
+  by photo-detail quartile img3 tex 17 -> 31 while klein stays 14-17. tS1 eval avatars, tex vs dl6g2 / share "over-detailed"
+  (> 1.3 x dl6g2 median): data/faces x1.75 / 86%, faces_eval2 x1.76 / 85%, selfies x1.30 / 45%, real_p2a x1.11 / 12%.
+  => the student copied an input-dependent target: img-3 guidance amplifies sharp, structured photo detail, so sharp portrait inputs
+  got photo-filter targets and noisy / blurry inputs got clean 3D. The v2 eval set has the same look as pool f, so it sits on the worst case.
+- **~03:15 UTC sweep result (results/teacher/tB1_guidance_sweep.json, 12 min, 0 errors; picture grids/teacher/tB1_guidance_sweep_examples.jpg
+  via scripts/s7_sweep_sheet.py):** klein ref style 0.774 / tex 14.6 / likeness 0.298. Rule (style >= 0.764, tex <= 16.0): only
+  **base_img1 qualifies (= tS3's setting) -> no new pick.**
+  | setting | style | tex | likeness | expr all / out | skin dL |
+  |---|---|---|---|---|---|
+  | base img1 (tS3) | 0.774 | 13.2 | 0.253 | 0.794 / 0.750 | 12.2 |
+  | base img3 / txt4 (tS1) | 0.669 | 24.2 | 0.372 | 0.750 / 0.729 | 14.5 |
+  | int img2 k2 | 0.759 | 15.1 | 0.269 | 0.775 / 0.740 | 13.7 |
+  | int img2 k5 | 0.737 | 17.8 | 0.301 | 0.750 / 0.708 | 13.7 |
+  | int img3 k5 | 0.699 | 22.1 | 0.312 | 0.681 / 0.625 | 14.9 |
+  | apg img3 | 0.662 | 22.9 | 0.436 | 0.756 / 0.750 | 7.6 |
+  | apg img4 k4 | 0.697 | 23.7 | 0.342 | 0.750 / 0.698 | 10.4 |
+  Guidance interval: no better than constant guidance on the style-likeness curve; even 2 guided steps (sigma 1 -> 0.85) add detail,
+  so "late steps = texture" is wrong for this 8-step shifted schedule. But int img2 k2 visibly fixes attributes img1 loses (cap colour,
+  grey beard, brown not blonde hair) at near-klein style; dark skin is still lightened. APG: highest likeness / best skin, but the output
+  is a desaturated, near-photo painting (projection removes the colour push) -> not a cartoon. SFace likeness cannot tell attribute
+  fidelity from photo texture -> next sweep needs an attribute-agreement metric (proposed, not approved).
+
+### 2026-11-26 03:24 UTC — sweep A + tS4 chain (user: "yes do A first, when training pls: per-row consistency check ... and report evals split by input type")
+`scripts/s8_chain.sh` on dev-duyhv (log logs/s8_chain.out, logs/s8/):
+0) `scripts/s8_split_eval.py` (new): avatar evals split by input type (synthetic portraits data/faces + faces_eval2, synthetic selfies,
+   real CelebA-derived) from saved outputs: likeness, attr, style, tex (x dl6g2), over-detailed share, skin dL median / dark-25%.
+1) `scripts/s8_attr_sweep.py` (copy of s7 + `scripts/attr_metric.py`: CLIP zero-shot agreement photo vs output on hair colour / age / beard /
+   headwear / glasses): base img1, base img3_txt4, interval g {1.5,2,2.5,3} x k {1,2,3}. Rule fixed in its docstring (metric sanity
+   img3 > img1 on attr; style >= klein - 0.01, tex <= 1.1x klein, expr >= img1 - 0.05; max attr; proceed only if +0.02 attr over img1).
+2-5) only if proceed: teacher eval gate (`scripts/s8_teacher_eval.py`, copy of teacher_eval with --k-img; expr_all >= 0.70), 53,930 pairs
+   (`scripts/s8_teacher_pairs.py`, copy of s3 with --k-img), **per-row consistency filter** (`scripts/s8_consistency.py`: tex of teacher vs
+   klein on klein's face box, plain + flipped view, drop if > 1.5x on either), tS4 = tS3 recipe + new pairs + that drop list (6000 steps
+   copied from tS1/tS3, unverified), tS3's evals + split evals for dl6g2 / tS1 / tS3 / tS4.
+Smoke (dev-duyhv, test files deleted): pairs with --k-img OK (96 rows, finite); consistency filter on tS3's img1 pairs: ratio median 0.90,
+0/256 dropped; on tS1's img3 pairs (2,000 rows): median 1.54, would drop 58% (pool f 89%, pool c 25%) = it catches the over-detail.
+- **03:36 UTC sweep A result: chain stopped by the rule (no training).** results/teacher/tB1_attr_sweep.json. klein ref style 0.774, tex 14.6.
+  Metric sanity OK (attr img3 0.754 > img1 0.720). Qualified: base_img1, int_img1.5_k1, int_img2.0_k1 (others fail style >= 0.764 or
+  expr >= 0.744). Pick int_img1.5_k1 (attr 0.730) = +0.010 over base_img1 < 0.02 -> S8_STOP. attr range across ALL settings is only
+  0.720-0.754 (img1 -> img3), so the guidance knob moves attributes little. Report-only: skin dL* on the darkest 25 synthetic tune faces
+  drops from +11.8 (img1) to +3.1 at int_img3.0_k1 (style 0.756, tex 14.5, expr 0.750; n=25, noisy) - the one clear early-guidance gain.
+  Split evals of the existing models: results/split_eval_base.json (logs/s8/split_base.log): tS1 over-detailed 85-86% on synthetic
+  portraits, 45% selfies, 12% real; dark-skin lightening is small on synthetic inputs (+2..+13) but +32 on real photos for all models.
+- **2026-11-26 03:42 UTC `scripts/s9_skin_attr_test.py` (user "yes run the test on dev-duyhv"):** int_img3.0_k1 vs int_img2.0_k2 (+ base_img1,
+  base_img3_txt4) on the 300 real eval photos (skin dL* all / darkest quarter, likeness, attr, style) + synthetic sheet (5 examples + 20
+  faces_eval2). Rule stated before running: img3_k1 if its real dark-quarter dL* is >= 5 lower than both others, else img2_k2.
+  Log logs/s9/skin_attr_test.log; out results/teacher/tB1_skin_attr_test.json, grids/teacher/tB1_skin_attr_{synthetic,real_dark}.jpg.
+- **03:46 UTC s9 result (results/teacher/tB1_skin_attr_test.json, 4.1 min):** real eval photos, skin dL* median all / darkest quarter (75):
+  base_img1 +18.6 / +32.5, int_img3.0_k1 +18.6 / +32.2, int_img2.0_k2 +18.4 / +31.8, base_img3_txt4 +18.4 / +32.2 (paired k1 - k2
+  -0.4, CI [-1.5, 0.0]) -> rule pick int_img2.0_k2. **But the sheet (grids/teacher/tB1_skin_attr_real_dark.jpg, internal) shows the
+  "darkest quarter by photo skin L*" is mostly light-skinned people in dim / shadowed photos** (outputs correctly light, dL* +40..+65 for
+  every setting). On the 6 visibly dark-skinned people among the 20 shown, dL* mean: img1 +20.5, img3_k1 +2.2, img2_k2 +7.0, img3_txt4 -1.7
+  (visual selection, n=6) - same order as the synthetic dark-25 numbers (+11.8 / +3.1 / +7.5). => the real-photo "+32 on the darkest
+  quarter" reported for every model since 11-25 is mostly a lighting artifact of the selection, not skin lightening. Needs a
+  lighting-robust dark-skin eval subset. Synthetic sheet (grids/teacher/tB1_skin_attr_synthetic.jpg): img3_k1 ~ img2_k2 (same clean look,
+  both fix cap colour / grey beard vs img1); img3_k1 keeps darker skin tones closer to the photo.
+
+### 2026-11-26 03:52 UTC — tS4 chain (user: "yes start tS4 with g img 3 step 1, and compare with the best model we have for cartoon")
+`scripts/s10_chain.sh` (= s8_chain steps 2-5, teacher setting fixed by the user: img guidance 3.0 on the first of 8 steps, txt 2.5;
+neither sweep rule picked it - user choice after the s9 sheet), dev-duyhv, logs/s10_chain.out, logs/s10/: teacher eval gate (expr >= 0.70)
+-> 53,930 pairs data/pairs/cartoon3d/teacher_tB1_s8_img3.0_k1.pt -> per-row consistency filter (> 1.5x klein detail) -> tS4 (tS3 recipe,
+6000 steps copied, unverified) -> tS3 evals + split evals (dl6g2 / tS1 / tS3 / tS4) + visual sheets vs dl6g2 (shipped cartoon3d).
+- **03:55 UTC tS4 teacher gate passed:** teacher at img3 / k1 / txt 2.5, 8 steps: expr_all 0.765 (img1 0.752, img3/txt4 0.727) -> pairs running.
+
+### 2026-11-26 — Hands / ghosting check, 1-step students vs teacher (user: "the hand maybe wrong and ghost blur for student 1 step compare with base 28")
+From saved eval outputs (same 24 eval_e1 faces x 20 options): grids/hands_teacher_vs_student_{0,1}.jpg, grids/hands_zoom.jpg; training
+targets grids/hands_training_targets.jpg. Per-option CLIP accuracy (results/e1/*.json, results/teacher/*.json per_edit):
+| option | teacher 28 st img3/txt4 | tS1 | teacher 8 st img1 | tS3 | teacher img3 k1 (tS4) | dl6g2 |
+|---|---|---|---|---|---|---|
+| ok (finger circle) | 0.83 | 0.21 | 0.75 | 0.17 | 0.83 | 0.08 |
+| thumbs | 0.62 | 0.50 | 0.54 | 0.54 | 0.75 | 0.50 |
+| thanks | 0.29 | 0.12 | 0.25 | 0.29 | 0.17 | 0.00 |
+| sleepy (Zzz) | 0.62 | 0.00 | 0.58 | 0.12 | 0.58 | 0.08 |
+| night (pillow + moon) | 0.83 | 0.00 | 0.88 | 0.00 | 0.79 | 0.00 |
+| mean of 7 hand options | 0.768 | 0.625 | 0.702 | 0.649 | 0.768 | 0.560 |
+Confirmed: (1) small / thin parts are lost (OK circle -> open palm, Zzz, moon); (2) ghost hands: faded extra hand (face_002 wave in tS1 and
+tS3), muddy hand blobs (face_034 thumbs in tS1 / dl6g2). Not the data: training targets draw the OK circle, Zzz, moon and clear hands, and these
+options are not rare (sleepy 1,880, night 1,563, ok 1,134 rows). The fixed phone noise puts props on a consistent side in the teacher pairs.
+Hypotheses (not proven): (a) under-training (6000 steps copied; val still falling); (b) ghosts = leftovers of dl6g2's old hand position (init;
+the ghost sits where dl6g2 draws the hand in the 2 zoomed cases); (c) MSE/LPIPS regression averages small uncertain parts; face-focused extra
+losses (eye) and nothing on hands / props.
+- **04:08 UTC tS4 switched to a long run (user: "yes do #1, train tS4 longer with checkpoint evals").** s10_chain.sh controller stopped
+  (kill by pid; its pair generation pid 217131 kept running, ETA ~07:15). `train_dl.py --save-at` (new): plain-recipe snapshots
+  weights/student/<tag>_s<step>/ (mid-schedule, cosine lr not annealed); smoke: 20-step snapshot loads in eval_e1 (0.588 ~ dl6g2 0.590), test
+  files deleted. `scripts/s11_chain.sh` (logs/s11_chain.out, logs/s11/): waits for the pairs -> consistency filter -> tS4 18000 steps (3x the
+  copied 6000, to get the curve) with snapshots 2000 / 6000 / 12000 -> eval_e1 + expr_eval per checkpoint -> `scripts/s11_ckpt_report.py`
+  (results/tS4_checkpoints.json: expressions, 7 hand / 5 prop options, ok / sleepy / night, likeness, sticker id, val MSE; grids/tS4_hands_ckpt.jpg)
+  -> final tS4 full evals + split evals + visual vs dl6g2.
+- **04:15 UTC pairs sped up on LOCAL H100 GPU 0 (user: parallel experiment on GPU 0):** `scripts/s8_teacher_pairs_rev.py` (reverse-order helper:
+  flip last shard -> plain first, skips existing shards, atomic tmp + os.replace writes, no merge; dev-duyhv's forward process merges).
+  First try failed (shard dir created root-owned by the dev-duyhv container -> chmod a+rwX from dev-duyhv). H100 6.3 pairs/s + H200 9.5 ->
+  pairs ETA ~06:00 UTC (was ~07:15). Log logs/s12/pairs_rev.log.
+- **04:34 UTC tS4o queued on local GPU 0: `scripts/s12_chain.sh`** (logs/s12_chain.out, logs/s12/): = tS4 with one change, no --init-from
+  (DreamLite-mobile original, as dl3F) -> tests whether ghost hands come from dl6g2's init. Waits for tS4's consistency drop list, same pairs /
+  losses / lr / 18000 steps / snapshots; eval_e1 + expr_eval per checkpoint; `scripts/s12_ckpt_report.py` (copy of s11's for tS4o).
+
+### 2026-11-26 ~11:00 UTC — tS4 results (s11_chain.sh, all steps OK; ckpt report re-run after a formatting fix in s11/s12_ckpt_report.py)
+Pairs done 05:58 (H200 forward + H100 reverse). Consistency filter: **81 / 53,930 rows dropped (0.15%)**, ratio median 0.96, p99 1.31 -> the
+img3-k1 pairs have no over-detail. Train 06:09-09:12 (18000 steps, val MSE 0.178 @2k -> 0.149 @6k -> 0.123 @12k -> 0.112 @18k, still falling).
+Checkpoints (results/tS4_checkpoints.json, grids/tS4_hands_ckpt.jpg; 2k/6k/12k mid-schedule):
+| model | expr all / face / outside | 7 hands | 5 props | ok / sleepy / night | likeness v2 | sticker id top-5 |
+|---|---|---|---|---|---|---|
+| teacher img3 k1 | 0.765 / 0.807 / 0.736 | 0.768 | 0.692 | 0.83 / 0.58 / 0.79 | 0.225 | - |
+| dl6g2 (shipped) | 0.590 / 0.734 / 0.493 | 0.560 | 0.400 | 0.08 / 0.08 / 0.00 | 0.248 | 0.346 |
+| tS4 @2k | 0.619 / 0.781 / 0.510 | 0.601 | 0.383 | 0.21 / 0.04 / 0.00 | 0.213 | 0.273 |
+| tS4 @6k | 0.652 / 0.771 / 0.573 | 0.679 | 0.425 | 0.58 / 0.04 / 0.00 | 0.201 | 0.302 |
+| tS4 @12k | 0.700 / 0.786 / 0.642 | 0.679 | 0.592 | 0.54 / 0.04 / 0.67 | 0.209 | 0.319 |
+| **tS4 @18k** | **0.681 / 0.786 / 0.611** (CI all [0.65, 0.713]) | 0.655 | 0.550 | 0.46 / 0.04 / 0.54 | 0.214 | 0.304 |
+Final tS4 vs dl6g2: sharpness 0.72 vs 0.64; split evals (results/split_eval_tS4.json): style v2 0.744 vs 0.753, over-detailed 13% vs 12% (tS1 85%),
+likeness real 0.157 vs 0.164, selfie 0.183 vs 0.179, attr v2 0.745 vs 0.767; synthetic dark-25 skin dL -3.3 vs +2.4. Visual (grids/tS4_compare_*.jpg):
+tS4 keeps black braids / black curls that dl6g2 greys / browns, clear hearts / tears / Zzz / moon; faint ghost hands remain at dl6g2's old hand
+positions (face_002 ok, face_034 thumbs) through 18k -> tS4o (from DreamLite-mobile original) decides the init hypothesis.
+Longer training helped gestures (night 0 -> 0.54-0.67, ok 0.21 -> 0.46-0.58, outside 0.51 -> 0.61-0.64); 12k ~ 18k within CI.
+tS4o (local H100 GPU 0): setup took 06:18 -> 10:11 UTC (3.9 h, smoke setup took 10 min; cause not found), then 0.96 s/step -> train ETA ~15:00 UTC.
+
+### 2026-11-26 ~12:05 UTC — 3 idle H200 (user: "I have 3 GPU h200 idle, pls training continue"; picked tS5 + comic teacher)
+gpu-h200-123 was rebooted (~10:38 UTC, 0 D-state); user's new run dev-duyhv-gpu (h200-gpu-fleet) has 2x H200; dev-duyhv idle since tS4. Single-GPU runs only.
+- **Comic teacher tC1, dev-duyhv-gpu GPU 0: `scripts/s13_comic_teacher.sh`** (logs/s13_chain.out, logs/s13/). `scripts/s13_tokens.py` built
+  weights/student/_dl_tokens_comic_line_22.pt (train_dl.init_tokens, 16 cartoon3d input photos; comic_line has no inputs/). tB1 recipe on the
+  52,750 comic_line klein pairs (20000 steps copied from tB1, unverified) -> teacher eval at img3-k1 (gate expr >= 0.70) -> comic teacher pairs
+  split over GPU 0 (forward) + GPU 1 (reverse helper). Smoke OK 12:07. Student design (pack vs one model) later.
+- **tS5, dev-duyhv: `scripts/s14_chain.sh`** (logs/s14_chain.out, logs/s14/): tS4 recipe + `scripts/train_dl_hc.py` (copy of train_dl.py - the
+  original was running tS4o) `--hard-crop-w 1 --hard-crop 160`: LPIPS + L1 on the 160 px crop with the largest student-vs-target error whose
+  centre is > 1.5x eye distance from the face centre (hands / props / ghost hands). Smoke: step-1 crops at the head top (props) and lower
+  corners (hands). 12000 steps (tS4 curve: 12k ~ 18k), snapshot 6000; evals + split + visual vs tS4 / dl6g2 (`scripts/s14_report.py`).
+- **14:40 UTC tS5 results (s14_chain.sh, 0 failures; results/tS5_checkpoints.json, grids/tS5_hands_ckpt.jpg, results/split_eval_tS5.json):**
+  tS5 (12k, hard-crop loss) expr 0.669 / 0.786 / 0.590 (tS4 18k 0.681 / 0.786 / 0.611; tS4 @12k 0.700 / 0.786 / 0.642), 7 hands 0.661 (tS4 0.655),
+  5 props 0.492 (0.550), ok / sleepy / night 0.46 / 0.08 / 0.42 (0.46 / 0.04 / 0.54), likeness v2 / real / selfie 0.214 / 0.157 / 0.181 (= tS4),
+  sticker id 0.298 (0.304), sharpness 0.70 (0.72), split evals = tS4. Visual: ghost hands still there (face_002 wave, face_034 thumbs blob).
+  => no gain from the hard-crop loss (proposed verdict: drop tS5). Ghost hands are not fixed by a loss on the hand area.
+- **2026-11-26 16:28 UTC tS5 dropped (user: "delete it"):** deleted weights/student/tS5{,_s6000}/{unet,task_emb.pt} (3.2 GB) and outputs/{expr_eval_tS5*,
+  student_tS5_decg2, e1/tS5*}. Kept: configs, train_log.jsonl, samples, results/*tS5*, logs/s14, grids/tS5_*.
+- **16:30 UTC tS4o results (s12_chain.sh, 0 failures; results/tS4o_checkpoints.json, grids/tS4o_hands_ckpt.jpg, zoom grids/ghost_tS4_vs_tS4o.jpg):**
+  | tS4o step | 2k | 6k | 12k | 18k | (tS4 18k) |
+  |---|---|---|---|---|---|
+  | expr all / outside | 0.654 / 0.569 | 0.669 / 0.580 | 0.671 / 0.594 | 0.688 / 0.622 | 0.681 / 0.611 |
+  | 7 hands / 5 props | 0.673 / 0.425 | 0.625 / 0.517 | 0.637 / 0.533 | 0.643 / 0.592 | 0.655 / 0.550 |
+  | ok / night | 0.54 / 0.00 | 0.21 / 0.46 | 0.33 / 0.58 | 0.33 / 0.71 | 0.46 / 0.54 |
+  | likeness v2 / sticker id | 0.224 / 0.300 | 0.220 / 0.327 | 0.206 / 0.296 | 0.213 / 0.300 | 0.214 / 0.304 |
+  | val MSE | 0.209 | 0.159 | 0.127 | 0.107 | 0.112 |
+  tS4o ~ tS4 (from-original learns as well as from dl6g2; the dl6g2 lineage is not needed). Ghost hands: present in BOTH, in different places
+  (face_002 wave: tS4 clean, tS4o ghost on the right; face_002 ok: tS4 ghost on the left, tS4o clean; face_034 thumbs: translucent hand in both)
+  -> init hypothesis rejected. Remaining hypothesis (not tested): the one-step student hedges between possible hand layouts (regression
+  averaging); the teacher eval uses random noise, so its hand positions are not the student's fixed-noise layout.
+- **16:35 UTC snapshots deleted (user: "yes delete snapshots"):** weights/student/{tS4,tS4o}_s{2000,6000,12000}/{unet,task_emb.pt} and their
+  outputs/e1/<run>, outputs/expr_eval_<run>_decg2. Kept: config.json per snapshot, results/e1/*.json, results/expr_eval_*.json, results/tS4*_checkpoints.json, grids.
+
+### 2026-11-26 ~16:45 UTC — Ghost-hand test (user: "yes run the test on dev-duyhv")
+`scripts/s15_ghost_test.py` on dev-duyhv (log logs/s15/ghost_test.log): 100 eval faces x {thumbs, wave, ok, think}; teacher tB1 at the tS4 pair
+setting with the FIXED phone noise (= what students copy) on base + 4 small input variants (~3% zoom + 8 px shifts) + mirror; students dl6g2 /
+tS4 / tS4o (phone path, decg2) on the same inputs; CPU hand locator (skin components outside face box + neck band; checked by eye on
+grids/s15_locator_check.jpg before use). Rule fixed in the docstring: CONFIRMED if tS4+tS4o ghost rate (hands both sides) on teacher-unstable
+cases >= 2x the stable-case rate and Fisher p < 0.05; REJECTED if ratio < 1.5 or p >= 0.2; else inconclusive.
+Out: results/s15_ghost_test.json, grids/s15_ghost_cases.jpg, outputs/s15_ghost/.
+- **17:00 UTC s15 result: NOT USABLE - the hand locator failed its eye check** (grids/s15_locator_check.jpg): "both sides" is often neck /
+  shoulder / ear skin on the other side (teacher itself "LR" in 100/400), "think" hands sit under the chin (side arbitrary), and faint /
+  brownish ghost hands are missed (dl6g2 097 thumbs). The script's printed verdict (ratio 1.3, p 0.019 -> "REJECTED") is therefore void.
+  Generated images kept (outputs/s15_ghost/, 6 x 400 per model) for a re-measurement with a real hand detector (proposed, not run).
+
+### 2026-11-27 ~04:15 UTC — Comic student pkC1 (user: "start comic student training first")
+Comic teacher chain s13 finished 11-26 17:19 UTC: tC1 val v-MSE 0.388, gate expr_all 0.715 (>= 0.70), 52,750 comic teacher pairs
+data/pairs/comic_line/teacher_tC1_s8_img3.0_k1.pt. `scripts/s16_comic_student.sh` on dev-duyhv (logs/s16_chain.out, logs/s16/):
+consistency filter (s8_consistency.py got --style) -> pkC1 = LoRA pack r32 mid + up_blocks.0 on tS4 (agreed new-style recipe), lr 1e-4,
+pk_comic's losses, 12000 steps (unverified for packs) + snapshot 6000 (train_dl.py --save-at now also saves LoRA packs) -> packs merged into
+their base for evals (`scripts/s16_merge_pack.py`, eval copies only) -> eval_e1 + expr_eval + sharpness + quality v2/real/selfie (comic refs)
+for pk_comic_m (old klein comic pack on dl6g2), dl9_comic_line (one-model comic view), pkC1_s6000_m, pkC1_m, all with decoder decg2;
+sheet grids/comic_students.jpg (`scripts/s16_sheet.py`).
+
+### 2026-11-27 04:41 UTC — decT4: tS4's own phone decoder (user: "for ts4, do u train the decoder for its?" -> "yes start decT4 on dev-duyhv-gpu")
+Found: every tS1-tS5 eval used decg2, which was trained for dl6g2 (dl6g2 latents -> klein PNGs); the recipe's decoder step was skipped for
+the teacher-distilled students. klein PNGs are misaligned targets for tS4 (teacher layout differs), so `scripts/train_decoder_t.py` (copy
+of train_decoder.py) adds --target-latents: target = decg2(teacher latent) for the same photo / flip / fixed noise. `scripts/s17_decT4.sh`
+on dev-duyhv-gpu GPU 0 (logs/s17_chain.out, logs/s17/): tS4 latents cache -> smoke -> decT4 (init decg2, decg2's losses / lr / 10k steps,
+copied, 1 GPU) -> eval_e1 (alias weights/student/tS4d so results/e1/tS4.json stays), expr_eval, sharpness, quality v2/real/selfie.
+Pass rule (decg2's): keep only if sharper than tS4 + decg2 without an expression (beyond CI) or likeness (> 0.01) drop.
