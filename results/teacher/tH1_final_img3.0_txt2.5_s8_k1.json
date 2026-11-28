@@ -1,0 +1,53 @@
+{
+ "tag": "tH1",
+ "ckpt": "final",
+ "g_img": 3.0,
+ "g_txt": 2.5,
+ "steps": 8,
+ "expr_acc": {
+  "all": 0.7958,
+  "face_only": 0.8073,
+  "outside": 0.7882
+ },
+ "expr_acc_ci95": {
+  "all": [
+   0.765,
+   0.825
+  ],
+  "outside": [
+   0.75,
+   0.826
+  ]
+ },
+ "per_edit": {
+  "happy": 0.7083,
+  "lol": 0.9583,
+  "love": 0.875,
+  "cry": 1.0,
+  "angry": 0.7083,
+  "wow": 0.875,
+  "think": 0.9583,
+  "sleepy": 0.625,
+  "thumbs": 0.7917,
+  "wave": 0.7917,
+  "ok": 0.3333,
+  "facepalm": 0.9583,
+  "shrug": 0.9167,
+  "party": 0.9167,
+  "cool": 1.0,
+  "shy": 0.9167,
+  "wink": 0.5417,
+  "sad": 0.4583,
+  "thanks": 0.75,
+  "night": 0.8333
+ },
+ "avatar_likeness": {
+  "id_cos_mean": 0.1725,
+  "n": 396,
+  "of": 400
+ },
+ "avatar_skin_dL_median": 16.9,
+ "expr_outputs": "outputs/expr_eval_teacher_tH1_final_img3.0_txt2.5_s8_k1/cartoon3d",
+ "metric_code": "eval_e1.py helpers",
+ "minutes": 2.9
+}

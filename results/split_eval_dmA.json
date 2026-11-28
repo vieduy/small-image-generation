@@ -1,0 +1,234 @@
+{
+ "face": {
+  "name": "synthetic portraits (data/faces)",
+  "n": 100,
+  "photo_tex": 16.1,
+  "models": {
+   "dl6g2": {
+    "likeness": 0.241,
+    "attr": 0.784,
+    "attr_groups": {
+     "hair": 0.65,
+     "age": 0.69,
+     "beard": 0.91,
+     "headwear": 0.7,
+     "glasses": 0.97
+    },
+    "style_clip": 0.764,
+    "tex": 12.55,
+    "skin_dL_median": 6.3,
+    "skin_dL_dark25": 2.4,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.1
+   },
+   "tS4": {
+    "likeness": 0.211,
+    "attr": 0.752,
+    "attr_groups": {
+     "hair": 0.6,
+     "age": 0.58,
+     "beard": 0.92,
+     "headwear": 0.69,
+     "glasses": 0.97
+    },
+    "style_clip": 0.752,
+    "tex": 12.43,
+    "skin_dL_median": 8.8,
+    "skin_dL_dark25": -2.7,
+    "tex_vs_dl6g2": 0.99,
+    "over_detailed_share": 0.11
+   },
+   "dmA": {
+    "likeness": 0.218,
+    "attr": 0.766,
+    "attr_groups": {
+     "hair": 0.61,
+     "age": 0.63,
+     "beard": 0.93,
+     "headwear": 0.69,
+     "glasses": 0.97
+    },
+    "style_clip": 0.757,
+    "tex": 12.54,
+    "skin_dL_median": 8.6,
+    "skin_dL_dark25": -2.4,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.12
+   }
+  }
+ },
+ "fe2": {
+  "name": "synthetic portraits (faces_eval2)",
+  "n": 300,
+  "photo_tex": 16.37,
+  "models": {
+   "dl6g2": {
+    "likeness": 0.25,
+    "attr": 0.767,
+    "attr_groups": {
+     "hair": 0.647,
+     "age": 0.61,
+     "beard": 0.95,
+     "headwear": 0.663,
+     "glasses": 0.967
+    },
+    "style_clip": 0.753,
+    "tex": 13.29,
+    "skin_dL_median": 7.1,
+    "skin_dL_dark25": 2.4,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.12
+   },
+   "tS4": {
+    "likeness": 0.215,
+    "attr": 0.745,
+    "attr_groups": {
+     "hair": 0.597,
+     "age": 0.547,
+     "beard": 0.933,
+     "headwear": 0.683,
+     "glasses": 0.967
+    },
+    "style_clip": 0.744,
+    "tex": 13.24,
+    "skin_dL_median": 7.3,
+    "skin_dL_dark25": -3.3,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.13
+   },
+   "dmA": {
+    "likeness": 0.215,
+    "attr": 0.751,
+    "attr_groups": {
+     "hair": 0.607,
+     "age": 0.553,
+     "beard": 0.94,
+     "headwear": 0.683,
+     "glasses": 0.973
+    },
+    "style_clip": 0.749,
+    "tex": 13.34,
+    "skin_dL_median": 6.5,
+    "skin_dL_dark25": -3.1,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.15
+   }
+  }
+ },
+ "fs": {
+  "name": "synthetic selfies",
+  "n": 200,
+  "photo_tex": 17.58,
+  "models": {
+   "dl6g2": {
+    "likeness": 0.179,
+    "attr": 0.73,
+    "attr_groups": {
+     "hair": 0.665,
+     "age": 0.62,
+     "beard": 0.885,
+     "headwear": 0.505,
+     "glasses": 0.975
+    },
+    "style_clip": 0.815,
+    "tex": 14.34,
+    "skin_dL_median": 8.0,
+    "skin_dL_dark25": 4.5,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.07
+   },
+   "tS4": {
+    "likeness": 0.183,
+    "attr": 0.716,
+    "attr_groups": {
+     "hair": 0.645,
+     "age": 0.575,
+     "beard": 0.88,
+     "headwear": 0.515,
+     "glasses": 0.965
+    },
+    "style_clip": 0.789,
+    "tex": 14.87,
+    "skin_dL_median": 12.0,
+    "skin_dL_dark25": 7.1,
+    "tex_vs_dl6g2": 1.04,
+    "over_detailed_share": 0.17
+   },
+   "dmA": {
+    "likeness": 0.184,
+    "attr": 0.716,
+    "attr_groups": {
+     "hair": 0.635,
+     "age": 0.56,
+     "beard": 0.885,
+     "headwear": 0.535,
+     "glasses": 0.965
+    },
+    "style_clip": 0.792,
+    "tex": 14.89,
+    "skin_dL_median": 11.8,
+    "skin_dL_dark25": 6.8,
+    "tex_vs_dl6g2": 1.04,
+    "over_detailed_share": 0.17
+   }
+  }
+ },
+ "rp": {
+  "name": "real photos (CelebA-derived)",
+  "n": 300,
+  "photo_tex": 9.91,
+  "models": {
+   "dl6g2": {
+    "likeness": 0.164,
+    "attr": 0.652,
+    "attr_groups": {
+     "hair": 0.427,
+     "age": 0.38,
+     "beard": 0.907,
+     "headwear": 0.57,
+     "glasses": 0.977
+    },
+    "style_clip": 0.837,
+    "tex": 13.04,
+    "skin_dL_median": 17.3,
+    "skin_dL_dark25": 32.5,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.04
+   },
+   "tS4": {
+    "likeness": 0.157,
+    "attr": 0.655,
+    "attr_groups": {
+     "hair": 0.41,
+     "age": 0.383,
+     "beard": 0.897,
+     "headwear": 0.62,
+     "glasses": 0.963
+    },
+    "style_clip": 0.817,
+    "tex": 13.07,
+    "skin_dL_median": 18.0,
+    "skin_dL_dark25": 31.8,
+    "tex_vs_dl6g2": 1.0,
+    "over_detailed_share": 0.05
+   },
+   "dmA": {
+    "likeness": 0.157,
+    "attr": 0.651,
+    "attr_groups": {
+     "hair": 0.4,
+     "age": 0.373,
+     "beard": 0.9,
+     "headwear": 0.62,
+     "glasses": 0.96
+    },
+    "style_clip": 0.82,
+    "tex": 13.21,
+    "skin_dL_median": 18.0,
+    "skin_dL_dark25": 31.8,
+    "tex_vs_dl6g2": 1.01,
+    "over_detailed_share": 0.05
+   }
+  }
+ }
+}

@@ -1,0 +1,4 @@
+tag                      thanks    shrug    party       ok     wave facepalm   thumbs    happy     wink     cool     mean
+dl6g2_decg2                0.62     0.70     0.60     0.62     0.56     0.62     0.63     0.73     0.63     0.68     0.64
+tS4_decg2                  0.65     0.84     0.70     0.73     0.65     0.72     0.69     0.81     0.71     0.72     0.72
+tS7_decg2                  0.65     0.85     0.72     0.59     0.54     0.62     0.58     0.80     0.71     0.70     0.68

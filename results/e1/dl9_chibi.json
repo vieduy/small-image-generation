@@ -1,0 +1,106 @@
+{
+ "run": "dl9_chibi",
+ "weights": "weights/student/dl9_chibi",
+ "decoder": "decg2",
+ "eval_code_sha1": "a317a5ad2d",
+ "git": "?",
+ "config": {
+  "init_from": "dl8",
+  "steps": 4000,
+  "lr": 1e-05,
+  "emb_lr": 0.001,
+  "bs": 16,
+  "seed": 0,
+  "manifest": "manifest_v2.jsonl",
+  "shared_trunk": false,
+  "shared_scope": "down_mid",
+  "gan_w": 0.2,
+  "lp512_w": 1.0,
+  "eye_w": 1.0,
+  "eye_lpips_w": 0.25,
+  "proper_flip": true,
+  "tgt_cache": false
+ },
+ "option_modules": null,
+ "n_option_inputs": null,
+ "self_attn_after_entry": null,
+ "entry": null,
+ "expr_acc": {
+  "all": 0.5938,
+  "face_only": 0.7344,
+  "outside": 0.5
+ },
+ "expr_acc_ci95": {
+  "all": [
+   0.556,
+   0.631
+  ],
+  "face_only": [
+   0.693,
+   0.776
+  ],
+  "outside": [
+   0.448,
+   0.545
+  ]
+ },
+ "per_edit": {
+  "happy": 0.8333,
+  "lol": 0.9583,
+  "love": 0.0,
+  "cry": 1.0,
+  "angry": 0.625,
+  "wow": 0.9167,
+  "think": 1.0,
+  "sleepy": 0.0,
+  "thumbs": 0.4583,
+  "wave": 0.6667,
+  "ok": 0.1667,
+  "facepalm": 0.8333,
+  "shrug": 0.8333,
+  "party": 0.6667,
+  "cool": 1.0,
+  "shy": 0.625,
+  "wink": 0.0,
+  "sad": 0.5417,
+  "thanks": 0.75,
+  "night": 0.0
+ },
+ "avatar_likeness": {
+  "id_cos_mean": 0.1867,
+  "n": 400,
+  "of": 400,
+  "set": "v2 synthetic: data/faces[:100] + data/faces_eval2[:300]"
+ },
+ "n_faces_expr": 24,
+ "split": {
+  "face_only": [
+   "happy",
+   "lol",
+   "cry",
+   "wow",
+   "sad",
+   "shy",
+   "wink",
+   "cool"
+  ],
+  "outside": [
+   "love",
+   "angry",
+   "think",
+   "sleepy",
+   "thumbs",
+   "wave",
+   "ok",
+   "facepalm",
+   "shrug",
+   "thanks",
+   "party",
+   "night"
+  ]
+ },
+ "chance": 0.05,
+ "outputs": "outputs/e1/dl9_chibi",
+ "grid": "grids/e1/dl9_chibi_expr.jpg",
+ "minutes": 16.6
+}

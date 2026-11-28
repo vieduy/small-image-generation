@@ -1829,3 +1829,173 @@ of train_decoder.py) adds --target-latents: target = decg2(teacher latent) for t
 on dev-duyhv-gpu GPU 0 (logs/s17_chain.out, logs/s17/): tS4 latents cache -> smoke -> decT4 (init decg2, decg2's losses / lr / 10k steps,
 copied, 1 GPU) -> eval_e1 (alias weights/student/tS4d so results/e1/tS4.json stays), expr_eval, sharpness, quality v2/real/selfie.
 Pass rule (decg2's): keep only if sharper than tS4 + decg2 without an expression (beyond CI) or likeness (> 0.01) drop.
+
+### 2026-11-27 ~06:05 UTC — Ghost-hand metric (user: "yes start the ghost metric first")
+`scripts/s18_owl_hands.py` on dev-duyhv-gpu GPU 1 (log logs/s18/owl.log): OWLv2 (google/owlv2-base-patch16-ensemble, local, public weights)
+hand boxes ("a hand" / "a human hand" / "a cartoon hand", score >= 0.05, NMS 0.3) + per-box opacity (mean |pixel - white|) and edge energy on
+the 9,600 s15 images (teacher fixed-noise / dl6g2 / tS4 / tS4o x 6 input variants x 400). Eye-check sheet grids/s18_owl_check.jpg (known ghost
+cases first) -> ghost-rate thresholds fixed from it BEFORE computing rates (step 2). Also 06:00 UTC decT4 verdict: expr 0.679 / 0.792 / 0.604
+(tS4 + decg2 0.681 / 0.786 / 0.611), likeness v2 0.215 (0.214), sharpness 0.69 (0.72) -> FAILS the pass rule; tS4 keeps decg2.
+- **06:15 UTC ghost metric result (`scripts/s18_ghost_rate.py` -> results/s18_ghost_rate.json; OWLv2 eye check grids/s18_owl_check.jpg:
+  catches extra faint hands (tS4 face_002 ok, 2nd box opacity 0.13) and blobs (dl6g2 face_097, score 0.13), misses the faintest white smears ->
+  lower bound).** Thresholds fixed before computing: hand = score >= 0.12, nested boxes merged; thumbs / wave / ok on base inputs (300 each):
+  | model | extra-hand (>= 2 hands) | no hand | faint hand | hand side flips under small input shifts |
+  |---|---|---|---|---|
+  | teacher (fixed noise) | 1.7% | 0.7% | 7.0% | 30.3% |
+  | dl6g2 | 0.3% | **12.0%** | 13.7% | 34.7% |
+  | tS4 | **4.0%** (wave 7%, ok 5%) | 0.7% | 6.3% | 28.0% |
+  | tS4o | **3.7%** | 2.3% | 6.0% | 29.0% |
+  **Hypothesis CONFIRMED (pre-set rule):** tS4 + tS4o extra hands on cases where the teacher's hand side is unstable 21/182 = 11.5% vs stable
+  2/418 = 0.5% (ratio 24, Fisher p < 1e-4). => ghost / extra hands come from the teacher's unstable hand side (30% of cases flip under 8 px
+  shifts); the one-step student hedges there. dl6g2 fails differently (drops / blurs the hand: no-hand 12%).
+
+### 2026-11-27 ~06:25 UTC — tS6: fixed hand side (user: "yes go with the fixed side fix tS6")
+`scripts/s19_fixed_side.py`: for thumbs / wave / ok teacher pairs, per view pick between the teacher's own target and the mirrored photo's
+target flipped back (re-encoded with the TinyVAE encoder), whichever has exactly one OWLv2 hand on the option's canonical side (= the side
+the plain targets use most); rows where either view cannot be made canonical are dropped. No new teacher sampling.
+`scripts/s19_chain.sh` on dev-duyhv-gpu GPU 0 (logs/s19_chain.out, logs/s19/): fixed-side pairs -> tS6 = tS4 recipe (dl6g2, 18000 steps)
+-> tS4's evals + split evals + ghost metric (`scripts/s19_student_s15.py` renders tS6 on the s15 inputs; s18 OWLv2 + rates; s18_ghost_rate.py
+now includes any new student). Pass rule (fixed): extra-hand <= 2.0% (half of tS4's 4.0%) and no-hand <= 2%, expr all >= 0.65 (tS4 CI low),
+likeness v2 / real / selfie within 0.01 of tS4. Side effect accepted by the user: one-handed gestures always on one side.
+- **06:39 UTC tS6 v1 stopped before training:** the 2-candidate fixed-side step would drop 1,966 / 3,218 gesture rows (61%). v2 (re-sample
+  undecided views with noise seeds 1235-1237) -> **S19_GATE_FAIL 06:54: still 1,695 / 3,218 dropped (52.7%, gate 25%)**; each extra seed fixed
+  only ~10% of undecided views (thumbs: 751 of 1,095 dropped). => the teacher's hand side is mostly set by the PHOTO (head turn etc.), not by
+  the noise; it is only unstable near the boundary (30% flip under 8 px shifts). No training ran; tS6 data files kept for the decision.
+
+### 2026-11-27 06:55 UTC — Chibi teacher tH1 (user: "start chibi teacher on dev-duyhv-gpu GPU 1")
+`scripts/s20_chibi_teacher.sh` (= s13 for chibi; logs/s20_chain.out, logs/s20/): chibi option tokens (s13_tokens.py chibi) -> tB1 recipe on
+the 22,451 chibi klein pairs, 12000 steps (~17 epochs; tB1 20k ~ 12 epochs; unverified) -> gate expr_all >= 0.70 at img3-k1 -> chibi teacher
+pairs on GPU 1.
+
+### 2026-11-27 07:05 UTC — DMD2 against ghost hands (user: "go with C, start DMD2")
+`scripts/train_dl_dmd.py` (copy of train_dl.py): DMD2 with the teacher tB1 as real score (same TinyVAE latent space, no klein bridge as in
+the old train_dmd.py; edit CFG txt 2.5, img 3 only for sigma >= 0.93 = tS4 setting), fake score = trainable tB1 copy (fp32, lr 5e-6,
+2 updates/step, 200 warm-up), grad = (x0_fake - x0_real) / mean|x0 - x0_real|; regression terms scaled by --reg-w; DINOv2 critic kept.
+Smoke (dev-duyhv-gpu, 60 steps, test files deleted): runs, snapshot OK, ~1.85 s/step. `scripts/s21_dmd.sh` (TAG/REGW/GPU/WAIT env):
+tS4 init, lr 5e-6, 4000 steps (unverified), snapshots 1k/2k/3k; per checkpoint eval_e1 + expr_eval + ghost metric (s19_student_s15.py,
+s18_owl_hands.py now takes a model filter -> per-run detection files, s18_ghost_rate.py merges them); final sharpness / quality / split / visual.
+- **dmA** (reg_w 0.25) dev-duyhv-gpu GPU 0 (logs/s21_dmA.out); **dmB** (reg_w 0, DMD2-faithful: DMD + critic) dev-duyhv, waits for the comic chain.
+- Pass rule (fixed): extra-hand <= 2.0% and no-hand <= 2%; expr_all >= 0.65; likeness within 0.01 of tS4; sharpness >= 0.69.
+- **07:17 UTC comic pack pkC1 results (s16_chain.sh, 0 failures; sheet grids/comic_students.jpg; all with decoder decg2):**
+  | comic | pk_comic (old, klein, on dl6g2) | dl9 comic view | pkC1 @6k | **pkC1 @12k** | teacher tC1 |
+  |---|---|---|---|---|---|
+  | expr all / face / outside | 0.533 / 0.594 / 0.493 | 0.510 / 0.594 / 0.455 | 0.635 / 0.641 / 0.632 | **0.646 / 0.641 / 0.649** (CI all [0.606, 0.681]) | 0.715 / 0.635 / 0.767 |
+  | sticker id top-5 | **0.687** | 0.692 | 0.554 | 0.577 | - |
+  | avatar likeness v2 / real / selfie | 0.489 / 0.319 / 0.415 | 0.492 / 0.325 / 0.407 | - | 0.470 / 0.294 / 0.377 | 0.494 (v2) |
+  | style v2 / real / selfie | 0.684 / 0.781 / 0.756 | 0.686 / 0.786 / 0.757 | - | 0.690 / 0.756 / 0.753 | - |
+  | sharpness vs klein | 0.54 | 0.48 | - | 0.52 | - |
+  pkC1: much better expressions / props (hearts, Zzz, moon, tears, cleaner hands), cleaner line art; but identity drops more than in
+  cartoon3d (sticker id -0.11, likeness -0.02..-0.04, below its own teacher's 0.494) and skin looks lighter on some faces. 12k > 6k slightly.
+
+### 2026-11-27 08:30 UTC — Pose conditioning step 1: pose detector check (user: "yes start step 1 on GPU 0")
+rtmlib 0.0.13 installed into venv with `uv pip --no-deps` (pure Python; models from OpenMMLab cached in cache/rtmlib, ~0.3 GB).
+`scripts/s22_pose_check.py`: whole-body pose (RTMW-dw-x-l, onnxruntime CPU) on 50 teacher training targets (7 gesture options x 7 + 1 avatar),
+grids/s22_pose_check.jpg, results/s22_pose_check.json. Person found 50/50; the visible hand's keypoints sit on the hand in ~all gesture
+stickers (thumbs / wave / ok / think / facepalm / shrug / thanks; facepalm a bit weaker), visible-hand score ~0.8 vs hidden hand ~0.2-0.3,
+avatar hands 0.11/0.12 -> GO for coarse pose maps (hand position, side, rough hand skeleton). Arms often leave the frame (elbows guessed).
+Finger-level accuracy (OK circle) not yet verified. Speed: ~1.9 s / image on CPU -> GPU onnxruntime needed for step 2 (~16k images).
+
+### 2026-11-27 ~08:55 UTC — Pose conditioning steps 2-3 (user: "use H100 local" / "yes go with the 2k step check")
+- `venv_ort` (separate venv: onnxruntime-gpu 1.22 + rtmlib via uv --no-deps; other packages from the project venv via a .pth) - the shared
+  venv is unchanged. `scripts/s23_pose_maps.py` (local GPU 0, log logs/s23/pose_maps.log): whole-body pose on the 7,867 gesture rows x 2 views of
+  the tS4 teacher pairs -> 3-ch 64x64 maps (L hand, R hand, upper arms) + per-option templates + sheets (grids/s23_pose_maps.jpg, s23_ok_fingers.jpg).
+- `scripts/train_dl_pose.py` (copy of train_dl.py) + `scripts/pose_student.py`: conv_in(x) + pconv(pose), pconv zero-init (= tS4 at step 0),
+  pose on the canvas half of the diptych, pose lr 1e-4; pose_conv.pt saved beside a plain unet dir.
+- `scripts/s24_chain.sh` (local GPU 0, logs/s24_chain.out): waits for the maps -> smoke -> tSP0 (tS4 + pose, 2000 steps) -> `scripts/s24_swap_test.py`
+  (50 eval faces x thumbs / wave / ok with template / mirrored template / no map; OWLv2 hand side). Rule: CONTINUE to 12k if the hand follows
+  the map's side in >= 70% of template + mirrored cases, else STOP (stronger injection).
+- 09:10 UTC: pose maps done 08:56 (17 min; patterns: shrug / thanks LR 100%; thumbs R 569 / L 459; wave L 588 / R 323; ok L 629 / R 417; think
+  R 1000 / L 422; facepalm R 551 / L 495 / none 186; templates thumbs R, wave L, ok L, think R, facepalm R). The local smoke stalled in the
+  per-run YuNet eye pass (busy local CPU; = tS4o's 3.9 h setup) -> `scripts/s24_eye_cache.py` builds data/pairs/cartoon3d/_eyes_manifest_v2.pt
+  once (136 s on dev-duyhv-gpu CPU); train_dl_pose.py reads it (key-checked). s24 chain restarted.
+- **09:19 UTC dmB evals relaunched the fast way (user: "yes relaunch dmB evals the fast way"):** s21_dmd.sh evals took ~1 h (per checkpoint
+  eval_e1 2 min + expr_eval 5 min + 2,400-image ghost render 3 min, all sequential; GPU mostly idle on CPU face detection / NFS PNG writes).
+  dmB chain stopped during expr_eval dmB_s2000 (s1000 fully done, s2000 eval_e1 done). `scripts/s21_eval_fast.sh` (log logs/s21f_dmB.out):
+  checkpoints in parallel, ghost renders on base inputs only (`scripts/s21_render_base.py`, copy of s19_student_s15.py), expr_eval (sticker
+  id) on the final model only, quality sets inferred sequentially then scored in parallel; owl / ghost rate / sharpness / split / visual after.
+  dmA (half done) left as is. Future chains use the fast form.
+- **09:31 UTC dmB results (fast eval 12 min; results/s18_ghost_rate.json, grids/dmB_extra_hands.jpg):** expr 0.735 / 0.833 / 0.670 (best so far;
+  tS4 0.681 / 0.786 / 0.611), likeness 0.216 / 0.151 / 0.179, sharpness 0.77, sticker id 0.275; extra-hand 9.7% (OK 20%, wave 7%, thumbs 2%),
+  no-hand 1.3% -> FAILS the pass rule. The extra hands are two SOLID hands (two-handed wave / OK, double thumbs-up) where tS4 drew one hand + a
+  faint ghost: DMD2 stops the blending but resolves the side ambiguity by drawing both.
+  **User decision: mark DMD2 as an improvement for later student training** (expressions / sharpness), not as the hand-count fix.
+- **09:45 UTC tSP1 started speculatively on dev-duyhv (user: "use [it] to accelerate the tSP0 plan"): `scripts/s25_tSP1.sh`** (logs/s25_chain.out):
+  tSP0 recipe, 12000 steps, snapshot 6000; to be stopped if tSP0's swap test says STOP. Pose-aware evals (templates) to follow.
+- **09:45 UTC dmA results (old eval chain):** expr 0.715 / 0.818 / 0.646 (tS4 0.681 / 0.786 / 0.611), likeness 0.216 / 0.157 / 0.184 (= tS4),
+  sharpness 0.75, sticker id 0.283; ghost: extra-hand 1k 5.0% -> 2k 5.3% -> 3k 3.7% -> 4k **2.3%** (tS4 4.0%; OK 4%, wave 3%, thumbs 0%), no-hand
+  4k 2.7% -> FAILS narrowly (rule <= 2.0% / <= 2%; 300 stickers, 1 sticker = 0.33%). Anchored DMD (reg 0.25) halves extra hands without
+  dmB's two-hand effect and keeps likeness. tSP0 trained (09:46); swap test crashed on a script bug (empty hand list), fixed, re-running.
+- **09:58 UTC tSP0 swap test (fixed): STOP - the student ignores the pose map.** Follow rate 0.529 (n 293; rule >= 0.70): hand-side counts with
+  template / mirrored template / no map are the same (thumbs L 29 / 28 / 28; wave L 22 / 25 / 24; ok L 20 / 24 / 22 of 50). tSP1 (speculative,
+  dev-duyhv, ~step 400) stopped per the rule. Cause: pconv learned almost nothing in 2k steps - weight |w| mean 0.0066 vs conv_in 0.066 (10x
+  smaller) on a sparse thin-line map in [0, 1] -> the pose signal is ~1% of the first-layer activation; only 15% of rows carry a map; the tS4
+  init already decides the hand side from the photo.
+- **10:15 UTC tSP0b (user: "yes run tSP0b on dev-duyhv"): `scripts/s27_tSP0b.sh`** (dev-duyhv, logs/s27_chain.out). Stronger injection:
+  `pose_student.PoseAdapter` (pose features added to the inputs of down_blocks 0/1/2 = 256@64x128, 256@32x64, 512@16x32, checked by a shape probe;
+  zero-init 1x1 outputs; ~0.5M params) via forward pre-hooks, adapter lr 1e-3; DENSE maps (`scripts/s26_dense_maps.py`: filled hand ellipse +
+  10 px lines; mean map value 0.0072 -> 0.0426, x5.9) scaled x4; half of each batch from the 7.8k gesture rows (`scripts/train_dl_pose2.py`).
+  2000 steps + swap test (dense templates x4). Same rule: >= 0.70 follow rate -> full run, else drop pose conditioning.
+
+### 2026-11-27 ~10:55 UTC — tSP0b result + tSP0c + chibi pack (user: "yes run tSP0c and start chibi pack")
+- **tSP0b swap test (10:24): follow 0.788 (rule >= 0.70: CONTINUE)** - ok 94% / 92% (template / mirrored), wave 82% / 80%, thumbs 78% / 46%;
+  BUT extra-hand with the map is HIGHER than without: wave 34% / 26% vs 12%, ok 22% / 22% vs 14% (grids/s24_swap_tSP0b.jpg: the main hand
+  goes where the map says - first proper OK circles - but a faint / second hand stays on the photo-preferred side). Cause: "no hand here" and
+  "no map" were the same zeros.
+- **tSP0c** (`scripts/s28_tSP0c.sh`, dev-duyhv, logs/s28_chain.out): `scripts/train_dl_pose3.py` = tSP0b + 4th channel = map-active flag
+  (adapter in-ch 4; pose_student loads 3 or 4). Swap test now also reports extra-hand with vs without map; rule: follow >= 0.70 AND
+  extra-hand(map) <= extra-hand(no map).
+- Chibi teacher chain s20 done 10:32: tH1 gate expr_all 0.796, 22,451 chibi teacher pairs (data/pairs/chibi/teacher_tH1_s8_img3.0_k1.pt).
+- **Chibi pack pkH1** (`scripts/s29_chibi_student.sh`, dev-duyhv-gpu GPU 0, logs/s29_chain.out): pkC1 recipe on the chibi teacher pairs
+  (consistency filter, LoRA r32 mid + up0 on tS4, lr 1e-4, 12000 steps + 6000 snapshot; unverified for chibi) -> fast-form evals vs
+  pk_chibi (merged) and dl9_chibi, sheet grids/chibi_students.jpg (`scripts/s29_sheet.py`).
+- **11:16 UTC tSP0c (map-active flag) swap test: STOP** (results/s24_swap_tSP0c.json): follow 0.766 (ok 92% / 86%, wave 82% / 76%, thumbs 77% / 46%)
+  but extra-hand with map 15.7% vs without 8.0% (tSP0b 17.3% vs 8.7%) -> the flag did not stop the 2nd hand. Pose conditioning (2k steps)
+  controls where the main hand goes (and gives proper OK circles) but adds a 2nd hand on the photo-preferred side; thumbs ignores mirrored maps.
+- **13:37 UTC chibi pack pkH1 results (s29, 0 failures; consistency filter dropped 0 / 22,451; grids/chibi_students.jpg):**
+  | chibi | pk_chibi (old) | dl9_chibi | pkH1 @6k | **pkH1 @12k** |
+  |---|---|---|---|---|
+  | expr all / face / outside | 0.581 / 0.724 / 0.486 | 0.594 / 0.734 / 0.500 | 0.708 / 0.740 / 0.688 | **0.721 / 0.750 / 0.701** |
+  | sticker id top-5 | 0.192 | **0.206** | - | 0.161 |
+  | likeness v2 / real / selfie | **0.192** / 0.115 / 0.128 | 0.187 / **0.126 / 0.140** | 0.175 (v2) | 0.171 / 0.113 / 0.116 |
+  | style v2 / real / selfie | 0.688 / 0.749 / 0.734 | 0.690 / 0.751 / 0.737 | - | 0.699 / 0.744 / 0.740 |
+  | sharpness vs klein | 0.60 | 0.53 | - | 0.61 |
+  Same pattern as comic: big expression gain, small identity loss. (eval_e1 took ~16 min each when 4 ran in parallel on one GPU.)
+- **~15:35 UTC dmA -> 8k (user: "yes start dmA 8k on dev-duyhv"): `scripts/s30_dmA8k.sh`** (logs/s30_chain.out, logs/s21_dmA8/): init dmA, +4000
+  steps same recipe (fake score re-initialised from tB1 + 200 warm-up - dmA did not save it; new cosine schedule), snapshot +2000; fast evals
+  (s21_eval_fast.sh now takes RUNS). Same pass rule. Labels: dmA8_s2000 = 6k total, dmA8 = 8k total.
+
+### 2026-11-27 ~16:00 UTC — Best-of-N clean gesture pairs + retrain + DMD2 (user: "go best-of-N clean teacher pairs for gestures + retrain with DMD2")
+`scripts/s31_chain.sh` on dev-duyhv-gpu (logs/s31_chain.out, logs/s31/): `scripts/s31_best_of_n.py` (2 shards, GPU 0 / 1): for thumbs / wave /
+ok / think / facepalm rows (~5.9k) x 2 views, candidates = existing target + teacher with noise seeds 1235-1237 (same setting); scores =
+OWLv2 hands (count, faint, top score, side) + CLIP-L p(correct option); pick the clean (1 hand, not faint, score >= 0.2) SIDE-CONSISTENT (same
+side as the original target, since ghosts come from an unstable side) candidate with the highest CLIP p; undecided views drop the row.
+`scripts/s31_merge.py` (gate <= 25% dropped) -> teacher_..._bon.pt / _bon_drop.json / grids/s31_bon_examples.jpg. Then tS7 = tS4 + 6k
+regression steps on the cleaned pairs (copied count) + fast evals; dmC = DMD2 (dmA recipe, reg 0.25) from tS7, 4k + snapshot 2k + fast evals.
+dmC pass rule = DMD rule (extra-hand <= 2.0%, no-hand <= 2%, expr >= 0.65, likeness within 0.01 of tS4, sharpness >= 0.69).
+
+### 2026-11-28 ~01:00 UTC — Results: dmA -> 8k, best-of-N (tS7), best-of-N + DMD2 (dmC). Ghost hands fixed.
+- dmA8 (s30) done 11-27 17:32; s31 chain done 11-27 19:47 (0 failures). Best-of-N merge: 5,959 rows, 1,270 dropped (21.3%, gate 25%):
+  facepalm 11, ok 0, think 503, thumbs 434, wave 322; replaced targets per view 37-76% (grids/s31_bon_examples.jpg).
+  | model | extra-hand | no-hand | expr all / face / outside | OK acc | likeness v2 / real / selfie | sticker id | sharpness |
+  |---|---|---|---|---|---|---|---|
+  | tS4 | 4.0% | 0.7% | 0.681 / 0.786 / 0.611 | 0.46 | 0.214 / 0.157 / 0.183 | 0.304 | 0.72 |
+  | dmA (4k) | 2.3% | 2.7% | 0.715 / 0.818 / 0.646 | 0.58 | 0.215 / 0.157 / 0.184 | 0.283 | 0.75 |
+  | dmA8 (8k) | 2.0% | 2.0% | 0.708 / 0.802 / 0.646 | 0.67 | 0.214 / 0.156 / 0.186 | 0.317 | 0.74 |
+  | tS7 (best-of-N, regression) | **0.7%** | 3.0% | 0.717 / 0.797 / 0.663 | **0.79** | 0.214 / 0.154 / 0.182 | 0.302 | 0.68 |
+  | **dmC (best-of-N + DMD2)** | **0.7%** | **1.7%** | 0.710 / 0.818 / 0.639 | 0.67 | 0.215 / 0.155 / 0.184 | **0.329** | 0.73 |
+  (teacher's own extra-hand rate 1.7%.) Pass rule (extra <= 2.0, no-hand <= 2, expr >= 0.65, likeness within 0.01, sharpness >= 0.69):
+  **dmC PASSES** all items; dmA8 passes at the limits (2.0 / 2.0); tS7 fails no-hand (3.0%) and sharpness (0.68).
+  Visual grids/dmC_compare_expr.jpg: single clean hands, no ghosts; hearts / tears / Zzz kept. => dmC = new cartoon3d candidate.
+- **2026-11-28 ~01:10 UTC cleanup (user):** deleted weights of the pose test models tSP0 / tSP0b / tSP0c, the speculative tSP1 dir (stopped at
+  ~step 400) and the snapshots dmA8_s2000 / dmC_s2000 (+ their outputs/e1 and outputs/s15_ghost renders), ~8.3 GB (first attempt killed
+  mid-way, finished in smaller steps). Kept: config.json / train_log.jsonl / samples, results/*.json, logs, grids.
+
+### 2026-11-28 ~01:10 UTC — dmC export + archive (user: "export dmC, also save the flow to archive the dmC and dl6g2")
+- Core ML export of dmC + decg2: `scripts/s32_export_dmC.sh` on dev-duyhv CPU (logs/s32_chain.out): export_coreml_dl.py --int8 + requant_w8.py
+  (w8e16) -> release/2026-11-28_dmC_decg2/ (+ README_iOS.md adapted from the dl6g2 pack, reference I/O) + zip.
+- Flow document `reports/FLOW_cartoon3d_dmC.md` (both recipes, settings, scripts, costs, lessons). Archive `archive/2026-11-28_cartoon3d/`:
+  dmC, dl6g2 (unet + task_emb + config), decg2, teacher tB1 (final unet + tokens), the flow doc and metrics.json.
+- **01:08 UTC dmC Core ML export done** (s32, 2.5 min on dev-duyhv CPU): release/2026-11-28_dmC_decg2/ = Student_dmC_decg2_fp16 (785.7 MB), _w8
+  (394.5 MB, quality not verified), _w8e16 (412.4 MB, task embeddings fp16 - the recommended 8-bit build, as for dl6g2), reference/ (21 I/O
+  images), export_info.json, README_iOS.md. Equivalence vs dl_arch.forward: mean 0.0000/255, max 0.006/255. Same I/O contract as the dl6g2 pack.
+  The container has no `zip`; release/2026-11-28_dmC_decg2_coreml.zip made with python shutil. Phone latency / quality not measured yet.

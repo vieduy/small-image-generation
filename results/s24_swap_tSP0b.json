@@ -1,0 +1,101 @@
+{
+ "student": "tSP0b",
+ "follow_rate_template_and_mirrored": 0.788,
+ "n": 293,
+ "verdict": "CONTINUE",
+ "per_case": {
+  "thumbs/template": {
+   "extra_hand": 0.0,
+   "no_hand": 0.08,
+   "side_counts": {
+    "L": 36,
+    "R": 10,
+    "-": 4
+   },
+   "expected_side": "L",
+   "follow_rate": 0.783
+  },
+  "thumbs/mirrored": {
+   "extra_hand": 0.0,
+   "no_hand": 0.04,
+   "side_counts": {
+    "L": 26,
+    "R": 22,
+    "-": 2
+   },
+   "expected_side": "R",
+   "follow_rate": 0.458
+  },
+  "thumbs/none": {
+   "extra_hand": 0.0,
+   "no_hand": 0.04,
+   "side_counts": {
+    "L": 30,
+    "R": 18,
+    "-": 2
+   }
+  },
+  "wave/template": {
+   "extra_hand": 0.34,
+   "no_hand": 0.02,
+   "side_counts": {
+    "L": 9,
+    "R": 40,
+    "-": 1
+   },
+   "expected_side": "R",
+   "follow_rate": 0.816
+  },
+  "wave/mirrored": {
+   "extra_hand": 0.26,
+   "no_hand": 0.0,
+   "side_counts": {
+    "L": 40,
+    "R": 10,
+    "-": 0
+   },
+   "expected_side": "L",
+   "follow_rate": 0.8
+  },
+  "wave/none": {
+   "extra_hand": 0.12,
+   "no_hand": 0.0,
+   "side_counts": {
+    "L": 23,
+    "R": 27,
+    "-": 0
+   }
+  },
+  "ok/template": {
+   "extra_hand": 0.22,
+   "no_hand": 0.0,
+   "side_counts": {
+    "L": 3,
+    "R": 47,
+    "-": 0
+   },
+   "expected_side": "R",
+   "follow_rate": 0.94
+  },
+  "ok/mirrored": {
+   "extra_hand": 0.22,
+   "no_hand": 0.0,
+   "side_counts": {
+    "L": 46,
+    "R": 4,
+    "-": 0
+   },
+   "expected_side": "L",
+   "follow_rate": 0.92
+  },
+  "ok/none": {
+   "extra_hand": 0.14,
+   "no_hand": 0.02,
+   "side_counts": {
+    "L": 23,
+    "R": 26,
+    "-": 1
+   }
+  }
+ }
+}

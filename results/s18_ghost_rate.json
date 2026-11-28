@@ -1,0 +1,226 @@
+{
+ "rule": "Ghost-hand metric, step 2 (2026-11-27): rates from results/s18_owl_detections.json with thresholds fixed after the eye check of\ngrids/s18_owl_check.jpg and BEFORE computing any rate: hand = OWLv2 box score >= 0.12, boxes merged when >= 60% of the smaller lies inside\nthe larger; one-handed options thumbs / wave / ok (think excluded: chin hand). Per model (base inputs, 300 stickers):\n  extra-hand rate = >= 2 hands (main ghost metric; the teacher's rate = legitimate two-hand drawings), no-hand rate = 0 hands,\n  faint-hand rate = any hand with opacity < 0.15 (noisy). Detector limits (eye check): faint white smears are missed -> lower bound.",
+ "models": {
+  "teacher": {
+   "n": 300,
+   "extra_hand_rate": 0.017,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.02,
+    "ok": 0.03
+   },
+   "no_hand_rate": 0.007,
+   "faint_hand_rate": 0.07,
+   "side_unstable_rate": 0.303
+  },
+  "dl6g2": {
+   "n": 300,
+   "extra_hand_rate": 0.003,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.0,
+    "ok": 0.01
+   },
+   "no_hand_rate": 0.12,
+   "faint_hand_rate": 0.137,
+   "side_unstable_rate": 0.347
+  },
+  "tS4": {
+   "n": 300,
+   "extra_hand_rate": 0.04,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.07,
+    "ok": 0.05
+   },
+   "no_hand_rate": 0.007,
+   "faint_hand_rate": 0.063,
+   "side_unstable_rate": 0.28
+  },
+  "tS4o": {
+   "n": 300,
+   "extra_hand_rate": 0.037,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.07,
+    "ok": 0.04
+   },
+   "no_hand_rate": 0.023,
+   "faint_hand_rate": 0.06,
+   "side_unstable_rate": 0.29
+  },
+  "dmA": {
+   "n": 300,
+   "extra_hand_rate": 0.023,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.03,
+    "ok": 0.04
+   },
+   "no_hand_rate": 0.027,
+   "faint_hand_rate": 0.047,
+   "side_unstable_rate": 0.29
+  },
+  "dmA8": {
+   "n": 300,
+   "extra_hand_rate": 0.02,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.02,
+    "ok": 0.04
+   },
+   "no_hand_rate": 0.02,
+   "faint_hand_rate": 0.047,
+   "side_unstable_rate": 0.98
+  },
+  "dmA8_s2000": {
+   "n": 300,
+   "extra_hand_rate": 0.013,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.02,
+    "ok": 0.02
+   },
+   "no_hand_rate": 0.01,
+   "faint_hand_rate": 0.033,
+   "side_unstable_rate": 0.99
+  },
+  "dmA_s1000": {
+   "n": 300,
+   "extra_hand_rate": 0.05,
+   "extra_hand_by_option": {
+    "thumbs": 0.01,
+    "wave": 0.08,
+    "ok": 0.06
+   },
+   "no_hand_rate": 0.023,
+   "faint_hand_rate": 0.057,
+   "side_unstable_rate": 0.313
+  },
+  "dmA_s2000": {
+   "n": 300,
+   "extra_hand_rate": 0.053,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.05,
+    "ok": 0.11
+   },
+   "no_hand_rate": 0.013,
+   "faint_hand_rate": 0.037,
+   "side_unstable_rate": 0.28
+  },
+  "dmA_s3000": {
+   "n": 300,
+   "extra_hand_rate": 0.037,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.04,
+    "ok": 0.07
+   },
+   "no_hand_rate": 0.03,
+   "faint_hand_rate": 0.05,
+   "side_unstable_rate": 0.277
+  },
+  "dmB": {
+   "n": 300,
+   "extra_hand_rate": 0.097,
+   "extra_hand_by_option": {
+    "thumbs": 0.02,
+    "wave": 0.07,
+    "ok": 0.2
+   },
+   "no_hand_rate": 0.013,
+   "faint_hand_rate": 0.057,
+   "side_unstable_rate": 0.987
+  },
+  "dmB_s1000": {
+   "n": 300,
+   "extra_hand_rate": 0.073,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.12,
+    "ok": 0.1
+   },
+   "no_hand_rate": 0.003,
+   "faint_hand_rate": 0.04,
+   "side_unstable_rate": 0.27
+  },
+  "dmB_s2000": {
+   "n": 300,
+   "extra_hand_rate": 0.097,
+   "extra_hand_by_option": {
+    "thumbs": 0.04,
+    "wave": 0.09,
+    "ok": 0.16
+   },
+   "no_hand_rate": 0.007,
+   "faint_hand_rate": 0.053,
+   "side_unstable_rate": 0.993
+  },
+  "dmB_s3000": {
+   "n": 300,
+   "extra_hand_rate": 0.11,
+   "extra_hand_by_option": {
+    "thumbs": 0.01,
+    "wave": 0.09,
+    "ok": 0.23
+   },
+   "no_hand_rate": 0.013,
+   "faint_hand_rate": 0.05,
+   "side_unstable_rate": 0.987
+  },
+  "dmC": {
+   "n": 300,
+   "extra_hand_rate": 0.007,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.0,
+    "ok": 0.02
+   },
+   "no_hand_rate": 0.017,
+   "faint_hand_rate": 0.02,
+   "side_unstable_rate": 0.983
+  },
+  "dmC_s2000": {
+   "n": 300,
+   "extra_hand_rate": 0.01,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.01,
+    "ok": 0.02
+   },
+   "no_hand_rate": 0.023,
+   "faint_hand_rate": 0.027,
+   "side_unstable_rate": 0.977
+  },
+  "tS7": {
+   "n": 300,
+   "extra_hand_rate": 0.007,
+   "extra_hand_by_option": {
+    "thumbs": 0.0,
+    "wave": 0.01,
+    "ok": 0.01
+   },
+   "no_hand_rate": 0.03,
+   "faint_hand_rate": 0.083,
+   "side_unstable_rate": 0.97
+  }
+ },
+ "hypothesis": {
+  "table_unstable_stable_x_extra_noextra": [
+   [
+    21,
+    161
+   ],
+   [
+    2,
+    416
+   ]
+  ],
+  "extra_unstable": 0.115,
+  "extra_stable": 0.005,
+  "ratio": 24.12,
+  "fisher_p": 0.0,
+  "verdict": "CONFIRMED"
+ }
+}
